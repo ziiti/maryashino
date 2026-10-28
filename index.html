@@ -43,6 +43,12 @@
         #game-area { position: relative; height: 300px; background: #E0F7FA; border-radius: 20px; overflow: hidden; display: none; touch-action: none; border: 2px dashed var(--primary-light); }
         #basket { position: absolute; bottom: 0; font-size: 40px; transition: left 0.1s; transform: translateX(-50%); }
         .apple { position: absolute; font-size: 30px; }
+        
+        /* Стили для второй игры */
+        .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+        .memory-card { background: var(--primary-light); height: 60px; display: flex; justify-content: center; align-items: center; font-size: 24px; border-radius: 10px; cursor: pointer; user-select: none; color: transparent; transition: 0.3s; }
+        .memory-card.flipped { background: white; border: 2px solid var(--primary); color: black; }
+        .memory-card.matched { background: var(--success); color: white; border: none; }
 
         nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--border); display: flex; justify-content: space-around; padding: 8px; z-index: 50; }
         .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: bold; color: var(--text-light); cursor: pointer; padding: 8px; border-radius: 12px; transition: 0.2s; }
@@ -61,6 +67,11 @@
         
         .zzz { position: absolute; top: -20px; right: 0; font-size: 24px; font-weight: bold; color: #4FACFE; animation: floatZ 2s infinite; display: none; }
         @keyframes floatZ { 0% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
+
+        /* Стили Учителя Зити */
+        .teacher-box { display: flex; gap: 15px; align-items: center; background: #FFF0F6; padding: 15px; border-radius: 16px; margin-bottom: 20px; border: 2px solid var(--primary-light); }
+        .teacher-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+        .teacher-text { font-size: 14px; font-style: italic; color: var(--text); }
     </style>
 </head>
 <body>
@@ -73,16 +84,23 @@
 </header>
 
 <div class="container">
+    <!-- Вкладка 1: Приветствие -->
     <div id="tab-ziti" class="tab-content active">
         <div class="card" style="text-align: center;">
+            <img src="ziti.png" alt="Зити" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 4px solid var(--primary-light); margin-bottom: 15px;" onerror="this.style.display='none'">
             <h2 style="color: var(--primary); margin-bottom: 10px;">Привет, я Зити! 👋</h2>
-            <p style="color: var(--text-light); font-size: 15px; margin-bottom: 20px;">Твой питомец гуляет по экрану. Решай задачи, чтобы заработать сердечки и покупать ему вкусности!</p>
+            <p style="color: var(--text-light); font-size: 15px; margin-bottom: 20px;">Я твой учитель. А еще у тебя есть питомец, который гуляет по экрану. Решай задачи, зарабатывай сердечки и заботься о нем!</p>
             <button class="btn" onclick="switchTab('lessons')">Начать урок 🚀</button>
         </div>
     </div>
 
+    <!-- Вкладка 2: Уроки -->
     <div id="tab-lessons" class="tab-content">
         <div class="card">
+            <div class="teacher-box">
+                <img src="ziti.png" class="teacher-img" onerror="this.replaceWith(Object.assign(document.createElement('div'),{innerText:'👨‍🏫',className:'teacher-img',style:'display:flex;align-items:center;justify-content:center;font-size:30px;background:#FFF0F6'}))">
+                <div class="teacher-text" id="ziti-dialog">Внимательно прочитай задачу.</div>
+            </div>
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 14px; color: var(--primary);">
                 <span id="task-type">Загрузка...</span>
                 <span id="task-progress">1/5</span>
@@ -92,11 +110,13 @@
                 <p id="task-q" style="font-size: 18px; font-weight: bold;">Загрузка задачи...</p>
             </div>
             <div id="answer-area"></div>
-            <p id="ziti-hint" style="text-align: center; font-size: 14px; color: var(--text-light); margin-top: 15px; font-style: italic;"></p>
+            <button class="btn btn-warning" style="margin-top:15px;" onclick="askTeacher()">Я не знаю 🤔</button>
         </div>
     </div>
 
+    <!-- Вкладка 3: Игры -->
     <div id="tab-games" class="tab-content">
+        <!-- Игра 1 -->
         <div class="card">
             <h2 style="color: var(--primary); margin-bottom: 10px; text-align: center;">🍎 Поймай яблочко</h2>
             <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px;">
@@ -105,8 +125,15 @@
             </div>
             <div id="game-area"><div id="basket">🧺</div></div>
         </div>
+        <!-- Игра 2 -->
+        <div class="card">
+            <h2 style="color: var(--primary); margin-bottom: 10px; text-align: center;">🧠 Найди пару</h2>
+            <div class="memory-grid" id="memory-grid"></div>
+            <button class="btn btn-secondary" style="margin-top:15px;" onclick="initMemoryGame()">Начать заново</button>
+        </div>
     </div>
 
+    <!-- Вкладка 4: Питомец -->
     <div id="tab-pet" class="tab-content">
         <div class="card">
             <h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">🐾 Мой друг</h2>
@@ -126,6 +153,7 @@
         </div>
     </div>
 
+    <!-- Вкладка 5: Родителям -->
     <div id="tab-parents" class="tab-content">
         <div class="card" style="text-align: center;">
             <h2 style="margin-bottom: 15px;">🔒 Родителям</h2>
@@ -140,7 +168,7 @@
 </div>
 
 <nav>
-    <button class="nav-btn active" onclick="switchTab('ziti')" id="nav-ziti"><span>🐱</span>Зити</button>
+    <button class="nav-btn active" onclick="switchTab('ziti')" id="nav-ziti"><span>👨‍🏫</span>Учитель</button>
     <button class="nav-btn" onclick="switchTab('lessons')" id="nav-lessons"><span>📖</span>Уроки</button>
     <button class="nav-btn" onclick="switchTab('games')" id="nav-games"><span>🎮</span>Игры</button>
     <button class="nav-btn" onclick="switchTab('pet')" id="nav-pet"><span>🐾</span>Питомец</button>
@@ -159,7 +187,63 @@ let state = {
 let manifest = null;
 let petX = 50, dir = 1, petState = 'idle', animTime = 0;
 
-// --- UI И НАВИГАЦИЯ ---
+// --- НАВИГАЦИЯ ---
+function switchTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${id}`).classList.add('active');
+    document.getElementById(`nav-${id}`).classList.add('active');
+    if(id === 'lessons') loadTask();
+    if(id === 'games') initMemoryGame();
+}
+
+// --- УЧИТЕЛЬ ЗИТИ И ЗАДАЧИ ---
+const TASKS = [
+    { type: 'Арифметика', q: 'У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?', a: '5', hint: 'Отдала - значит вычитаем. 8 - 3 = ?' },
+    { type: 'Логика', q: 'Все коты мяукают. Мурка — кот. Что делает Мурка? (Напиши "мяукает")', a: 'мяукает', hint: 'Мурка - кот, значит она...' },
+    { type: 'IQ', q: 'Продолжи ряд: 2, 4, 6, 8, ... Какое следующее число?', a: '10', hint: 'Каждый раз прибавляется 2.' },
+    { type: 'Внимание', q: 'Найди лишнее: яблоко, груша, морковь, банан.', a: 'морковь', hint: 'Морковь - это овощ, а остальное - фрукты.' },
+    { type: 'Логика', q: 'Что тяжелее: 1 кг ваты или 1 кг железа? (Напиши "одинаково")', a: 'одинаково', hint: 'Вес одинаковый - 1 килограмм!' }
+];
+
+function loadTask() {
+    if(state.lessonTask >= 5) { 
+        alert('Урок пройден! +20 сердечек'); 
+        state.hearts += 20; state.lessonTask = 0; updateUI(); 
+    }
+    const task = TASKS[state.lessonTask];
+    
+    document.getElementById('ziti-dialog').innerText = "Внимательно прочитай задачу.";
+    document.getElementById('task-type').innerText = task.type;
+    document.getElementById('task-q').innerText = task.q;
+    document.getElementById('task-progress').innerText = `${state.lessonTask + 1}/5`;
+    document.getElementById('lesson-bar').style.width = `${(state.lessonTask/5)*100}%`;
+    
+    document.getElementById('answer-area').innerHTML = `
+        <input type="text" id="ans" placeholder="Твой ответ..." style="width:100%; padding:12px; border-radius:12px; border:2px solid var(--border); font-size:16px; margin-bottom:10px; text-align:center;">
+        <button class="btn" onclick="checkAns()">Отправить</button>
+    `;
+}
+
+function askTeacher() {
+    const task = TASKS[state.lessonTask];
+    document.getElementById('ziti-dialog').innerText = "Подсказка: " + task.hint;
+}
+
+function checkAns() {
+    const task = TASKS[state.lessonTask];
+    const val = document.getElementById('ans').value.trim().toLowerCase();
+    if(val === task.a.toLowerCase()) {
+        state.hearts += 10; state.solved++; state.lessonTask++;
+        updateUI();
+        if(window.confetti) confetti({ particleCount: 50, spread: 60 });
+        loadTask();
+    } else {
+        document.getElementById('ziti-dialog').innerText = "Почти! Попробуй еще раз или нажми 'Я не знаю'.";
+    }
+}
+
+// --- UI ---
 function updateUI() {
     document.getElementById('hearts').innerText = state.hearts;
     document.getElementById('val-hunger').innerText = Math.round(state.pet.hunger) + '%';
@@ -173,37 +257,35 @@ function updateUI() {
     document.getElementById('btn-sleep').innerText = state.pet.isSleeping ? 'Разбудить ☀️' : 'Спать 😴';
     document.getElementById('zzz-text').style.display = state.pet.isSleeping ? 'block' : 'none';
 }
-
-function switchTab(id) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(`tab-${id}`).classList.add('active');
-    document.getElementById(`nav-${id}`).classList.add('active');
-    if(id === 'lessons') loadTask();
-}
 </script><script>
-// --- СБОРКА ПИТОМЦА ---
+// --- СБОРКА ПИТОМЦА ИЗ SVG ---
 async function initPet() {
     try {
         const res = await fetch('./manifest.json');
         manifest = await res.json();
         buildPetDOM();
         startPetLoop();
-    } catch(e) { console.error("Ошибка манифеста", e); }
+    } catch(e) { console.error("Ошибка загрузки манифеста", e); }
 }
 
 function createImg(id) {
     const p = manifest.parts.find(x => x.id === id);
     if(!p) return '';
-    // Оборачиваем каждую картинку в отдельный <g>, чтобы ничего не съезжало
-    return `<g transform="translate(${-p.pivot[0]}, ${-p.pivot[1]})"><image href="${p.file}" width="${p.size[0]}" height="${p.size[1]}" /></g>`;
+    return `<image href="${p.file}" x="${-p.pivot[0]}" y="${-p.pivot[1]}" width="${p.size[0]}" height="${p.size[1]}" />`;
 }
 
 function buildPetDOM() {
     const wrapper = document.getElementById('pet-svg-wrapper');
     
     let mouth = state.pet.mouth ? state.pet.mouth : (state.pet.hunger < 30 ? "15_mouth_sad" : "13_mouth_smile");
-    let eyes = state.pet.isSleeping ? createImg("07_lid_left") + createImg("08_lid_right") : createImg("03_eye_left") + createImg("04_eye_right") + createImg("05_pupil_left") + createImg("06_pupil_right");
+    
+    // Формируем глаза
+    let eyeL = createImg("03_eye_left") + createImg("05_pupil_left");
+    let eyeR = createImg("04_eye_right") + createImg("06_pupil_right");
+    if (state.pet.isSleeping) {
+        eyeL = createImg("07_lid_left");
+        eyeR = createImg("08_lid_right");
+    }
 
     wrapper.innerHTML = `
     <svg viewBox="0 0 400 520">
@@ -251,18 +333,15 @@ function buildPetDOM() {
         <g transform="translate(200, 160)">${createImg("09_headphones")}</g>
         <g transform="translate(200, 96)">${createImg("02_hair")}</g>
         
-        <!-- Глаза и Брови (разделены четко) -->
-        <g transform="translate(162, 168)">${createImg("10_brow_left")}</g>
-        <g transform="translate(238, 168)">${createImg("11_brow_right")}</g>
+        <!-- Брови -->
+        <g transform="translate(162, 128)">${createImg("10_brow_left")}</g>
+        <g transform="translate(238, 128)">${createImg("11_brow_right")}</g>
         
-        <!-- Левыый глаз -->
-        <g transform="translate(162, 168)">
-            ${eyes.split('</g>')[0]}</g>
-        </g>
-        <!-- Правый глаз -->
-        <g transform="translate(238, 168)">
-            ${eyes.split('</g>')[1] || ''}</g>
-        </g>
+        <!-- Левый Глаз -->
+        <g transform="translate(162, 168)">${eyeL}</g>
+        
+        <!-- Правый Глаз -->
+        <g transform="translate(238, 168)">${eyeR}</g>
 
         <!-- Рот -->
         <g transform="translate(200, 208)">${createImg(mouth)}</g>
@@ -350,7 +429,7 @@ function sleepPet() {
     updateUI(); buildPetDOM();
 }
 </script><script>
-// --- ИГРА "ПОЙМАЙ ЯБЛОЧКО" ---
+// --- ИГРА 1: ПОЙМАЙ ЯБЛОЧКО ---
 let isPlaying = false, score = 0, basketPos = 50;
 function startGame() {
     if(state.pet.energy < 15) return alert('Питомец устал!');
@@ -396,73 +475,182 @@ function endGame() {
     updateUI();
     alert('Молодец! +5 сердечек!');
 }
-</script><script>
-// --- БАЗА ЗАДАЧ ---
-const TASKS = [
-    { type: 'Арифметика', q: 'У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?', a: '5' },
-    { type: 'Логика', q: 'Все коты мяукают. Мурка — кот. Что делает Мурка? (Напиши "мяукает")', a: 'мяукает' },
-    { type: 'IQ', q: 'Продолжи ряд: 2, 4, 6, 8, ... Какое следующее число?', a: '10' },
-    { type: 'Внимание', q: 'Найди лишнее: яблоко, груша, морковь, банан.', a: 'морковь' },
-    { type: 'Логика', q: 'Что тяжелее: 1 кг ваты или 1 кг железа? (Напиши "одинаково")', a: 'одинаково' }
-];
 
-function loadTask() {
-    if(state.lessonTask >= 5) { 
-        alert('Урок пройден! +20 сердечек'); 
-        state.hearts += 20; state.lessonTask = 0; updateUI(); 
-    }
-    const task = TASKS[state.lessonTask];
+// --- ИГРА 2: НАЙДИ ПАРУ ---
+const memoryIcons = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+let memoryCards = [];
+let flippedCards = [];
+let matchedPairs = 0;
+let lockBoard = false;
+
+function initMemoryGame() {
+    memoryCards = [...memoryIcons, ...memoryIcons].sort(() => 0.5 - Math.random());
+    flippedCards = [];
+    matchedPairs = 0;
+    lockBoard = false;
     
-    document.getElementById('task-type').innerText = task.type;
-    document.getElementById('task-q').innerText = task.q;
-    document.getElementById('task-progress').innerText = `${state.lessonTask + 1}/5`;
-    document.getElementById('lesson-bar').style.width = `${(state.lessonTask/5)*100}%`;
-    document.getElementById('ziti-hint').innerText = '';
+    const grid = document.getElementById('memory-grid');
+    grid.innerHTML = '';
     
-    document.getElementById('answer-area').innerHTML = `
-        <input type="text" id="ans" placeholder="Твой ответ..." style="width:100%; padding:12px; border-radius:12px; border:2px solid var(--border); font-size:16px; margin-bottom:10px; text-align:center;">
-        <button class="btn" onclick="checkAns()">Отправить</button>
-    `;
+    memoryCards.forEach((icon, index) => {
+        const card = document.createElement('div');
+        card.className = 'memory-card';
+        card.dataset.icon = icon;
+        card.dataset.index = index;
+        card.innerText = icon;
+        card.onclick = () => flipCard(card);
+        grid.appendChild(card);
+    });
 }
 
-function checkAns() {
+function flipCard(card) {
+    if (lockBoard) return;
+    if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+    
+    card.classList.add('flipped');
+    flippedCards.push(card);
+    
+    if (flippedCards.length === 2) {
+        lockBoard = true;
+        const [card1, card2] = flippedCards;
+        
+        if (card1.dataset.icon === card2.dataset.icon) {
+            card1.classList.add('matched');
+            card2.classList.add('matched');
+            flippedCards = [];
+            matchedPairs++;
+            lockBoard = false;
+            
+            if (matchedPairs === 8) {
+                state.hearts += 10;
+                state.pet.mood = Math.min(100, state.pet.mood + 10);
+                updateUI();
+                setTimeout(() => alert('Ура! Все пары найдены! +10 сердечек'), 300);
+            }
+        } else {
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                flippedCards = [];
+                lockBoard = false;
+            }, 1000);
+        }
+    }
+}
+</script><script>
+// --- СОХРАНЕНИЕ ПРОГРЕССА (LOCALSTORAGE) ---
+function saveProgress() {
+    localStorage.setItem('maryashino_save_v1', JSON.stringify(state));
+}
+
+// Переопределяем updateUI, чтобы он сохранял прогресс при каждом обновлении
+const originalUpdateUI = updateUI;
+updateUI = function() {
+    originalUpdateUI();
+    saveProgress();
+};
+
+// Загрузка прогресса при старте
+function loadProgress() {
+    const saved = localStorage.getItem('maryashino_save_v1');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            // Объединяем сохраненные данные с текущим состоянием
+            Object.assign(state, parsed);
+            // Восстанавливаем вложенный объект питомца
+            if (parsed.pet) Object.assign(state.pet, parsed.pet);
+        } catch(e) { console.error("Ошибка загрузки прогресса", e); }
+    }
+}
+
+// --- ДЕТЕКТОР ХАЛТУРЫ ---
+let lastAnswerTime = 0;
+const originalCheckAns = checkAns;
+
+checkAns = function() {
     const task = TASKS[state.lessonTask];
     const val = document.getElementById('ans').value.trim().toLowerCase();
+    const now = Date.now();
+    
+    // Если ответ дан быстрее, чем за 1.5 секунды, и он неверный - это тык пальцем
+    if (now - lastAnswerTime < 1500 && val !== task.a.toLowerCase()) {
+        document.getElementById('ziti-dialog').innerText = "Не спеши! Прочитай задачу внимательно. Я подожду.";
+        return; // Не засчитываем попытку
+    }
+    
+    lastAnswerTime = now;
+
     if(val === task.a.toLowerCase()) {
-        state.hearts += 10; state.solved++; state.lessonTask++;
-        updateUI();
+        state.hearts += 10; 
+        state.solved++; 
+        state.lessonTask++;
+        
+        if (state.lessonTask % 5 === 0 && state.lessonTask > 0) {
+            state.hearts += 20;
+            state.lessonTask = 0;
+            if(window.confetti) confetti({ particleCount: 100, spread: 90 });
+            setTimeout(() => alert('Урок пройден! Бонус +20 сердечек! 🎉'), 500);
+        }
+        
+        updateUI(); // Вызовет сохранение
         if(window.confetti) confetti({ particleCount: 50, spread: 60 });
         loadTask();
     } else {
-        document.getElementById('ziti-hint').innerText = "Попробуй еще раз, у тебя получится!";
+        document.getElementById('ziti-dialog').innerText = "Почти! Попробуй еще раз или нажми 'Я не знаю'.";
+    }
+};
+</script><script>
+// --- ФИНАЛЬНЫЙ ЗАПУСК ---
+// Переопределяем функцию сброса, чтобы она очищала LocalStorage
+function resetProgress() {
+    if(confirm('Вы уверены, что хотите сбросить весь прогресс? Все сердечки и достижения будут удалены.')) {
+        localStorage.removeItem('maryashino_save_v1'); // Удаляем сохранение
+        location.reload(); // Перезагружаем страницу
     }
 }
 
-// --- РОДИТЕЛЯМ ---
+// Переопределяем authParent, чтобы он показывал актуальную статистику
 function authParent() {
     if(document.getElementById('pin').value === '1234') {
         document.getElementById('parent-stats').style.display = 'block';
         document.getElementById('stat-solved').innerText = state.solved;
-    } else alert('Неверный PIN');
+    } else {
+        alert('Неверный PIN');
+    }
 }
 
-function resetProgress() {
-    if(confirm('Сбросить всё?')) { location.reload(); }
-}
-
-// --- ЭФФЕКТ ПРИЗРАКА ---
+// --- ЭФФЕКТ ПРИЗРАКА (Финальная версия) ---
+// Питомец становится прозрачным при наведении на любые кликабельные элементы
 document.addEventListener('mouseover', e => {
-    if(e.target.closest('button, input, .nav-btn')) document.body.classList.add('hover-ui');
-});
-document.addEventListener('mouseout', e => {
-    if(e.target.closest('button, input, .nav-btn')) document.body.classList.remove('hover-ui');
+    if(e.target.closest('button, input, .nav-btn, .memory-card, .btn')) {
+        document.body.classList.add('hover-ui');
+    }
 });
 
-// --- СТАРТ ---
-window.onload = () => {
+document.addEventListener('mouseout', e => {
+    if(e.target.closest('button, input, .nav-btn, .memory-card, .btn')) {
+        document.body.classList.remove('hover-ui');
+    }
+});
+
+// --- СТАРТ ВСЕГО ПРИЛОЖЕНИЯ ---
+window.addEventListener('load', () => {
+    // 1. Сначала загружаем сохраненный прогресс
+    loadProgress(); 
+    
+    // 2. Инициализируем питомца (загружаем SVG)
     initPet();
+    
+    // 3. Обновляем интерфейс (сердечки, шкалы)
     updateUI();
-};
+    
+    // 4. Загружаем первую задачу
+    loadTask();
+    
+    // 5. Инициализируем сетку памяти
+    initMemoryGame();
+});
 </script>
 </body>
 </html>

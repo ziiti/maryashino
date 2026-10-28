@@ -651,6 +651,358 @@ window.addEventListener('load', () => {
     // 5. Инициализируем сетку памяти
     initMemoryGame();
 });
+</script><script>
+// --- ФИКС ЗРАЧКОВ ПИТОМЦА ---
+// Перехватываем оригинальную функцию сборки питомца
+const originalBuildPetDOM = buildPetDOM;
+
+buildPetDOM = function() {
+    // Вызываем оригинальную сборку
+    originalBuildPetDOM();
+    
+    // Теперь аккуратно добавляем зрачки поверх глаз
+    if (manifest && !state.pet.isSleeping) {
+        const svg = document.querySelector('#pet-svg-wrapper svg');
+        if (svg) {
+            // Левый зрачок (05_pupil_left)
+            const pupilLPart = manifest.parts.find(x => x.id === "05_pupil_left");
+            if (pupilLPart) {
+                const gL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                // Центр белка левого глаза (162, 168), зрачок крепится по своему pivot
+                gL.setAttribute("transform", `translate(165, 172)`); 
+                const imgL = document.createElementNS("http://www.w3.org/2000/svg", "image");
+                imgL.setAttribute("href", pupilLPart.file);
+                imgL.setAttribute("x", -pupilLPart.pivot[0]);
+                imgL.setAttribute("y", -pupilLPart.pivot[1]);
+                imgL.setAttribute("width", pupilLPart.size[0]);
+                imgL.setAttribute("height", pupilLPart.size[1]);
+                gL.appendChild(imgL);
+                svg.appendChild(gL);
+            }
+
+            // Правый зрачок (06_pupil_right)
+            const pupilRPart = manifest.parts.find(x => x.id === "06_pupil_right");
+            if (pupilRPart) {
+                const gR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                // Центр белка правого глаза (238, 168)
+                gR.setAttribute("transform", `translate(235, 172)`);
+                const imgR = document.createElementNS("http://www.w3.org/2000/svg", "image");
+                imgR.setAttribute("href", pupilRPart.file);
+                imgR.setAttribute("x", -pupilRPart.pivot[0]);
+                imgR.setAttribute("y", -pupilRPart.pivot[1]);
+                imgR.setAttribute("width", pupilRPart.size[0]);
+                imgR.setAttribute("height", pupilRPart.size[1]);
+                gR.appendChild(imgR);
+                svg.appendChild(gR);
+            }
+        }
+    }
+};
+
+// Пересобираем питомца сразу после загрузки, чтобы зрачки появились
+setTimeout(() => {
+    if (manifest) buildPetDOM();
+}, 500);
+</script><script>
+// ==========================================
+// ФИНАЛЬНЫЙ ПАТЧ: ЗРАЧКИ, РЕАКЦИИ И ХОДЬБА
+// ==========================================
+
+// 1. ФИКС ЗРАЧКОВ
+const originalBuildPetDOM = buildPetDOM;
+buildPetDOM = function() {
+    originalBuildPetDOM();
+    if (manifest && !state.pet.isSleeping) {
+        const svg = document.querySelector('#pet-svg-wrapper svg');
+        if (svg) {
+            // Левый зрачок
+            const pupilL = manifest.parts.find(x => x.id === "05_pupil_left");
+            if (pupilL) {
+                const gL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gL.setAttribute("transform", `translate(165, 172)`); 
+                gL.innerHTML = `<image href="${pupilL.file}" x="${-pupilL.pivot[0]}" y="${-pupilL.pivot[1]}" width="${pupilL.size[0]}" height="${pupilL.size[1]}" />`;
+                svg.appendChild(gL);
+            }
+            // Правый зрачок
+            const pupilR = manifest.parts.find(x => x.id === "06_pupil_right");
+            if (pupilR) {
+                const gR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gR.setAttribute("transform", `translate(235, 172)`);
+                gR.innerHTML = `<image href="${pupilR.file}" x="${-pupilR.pivot[0]}" y="${-pupilR.pivot[1]}" width="${pupilR.size[0]}" height="${pupilR.size[1]}" />`;
+                svg.appendChild(gR);
+            }
+        }
+    }
+};
+
+// 2. ФИКС РЕАКЦИЙ НА КНОПКИ (РОТ И ГЛАЗА)
+const originalFeedPet = feedPet;
+feedPet = function() {
+    if(state.hearts < 10) return alert('Нужно больше сердечек!');
+    if(state.pet.isSleeping) return alert('Питомец спит.');
+    
+    state.hearts -= 10;
+    state.pet.hunger = Math.min(100, state.pet.hunger + 30);
+    state.pet.mouth = '14_mouth_open'; // Открываем рот
+    updateUI(); 
+    buildPetDOM(); // Пересобираем, чтобы рот появился
+    
+    setTimeout(() => { 
+        state.pet.mouth = null; 
+        buildPetDOM(); // Возвращаем обычный рот
+    }, 1500);
+};
+
+const originalSleepPet = sleepPet;
+sleepPet = function() {
+    state.pet.isSleeping = !state.pet.isSleeping;
+    
+    if(state.pet.isSleeping) {
+        // Логика восстановления энергии
+        if(window.sleepInt) clearInterval(window.sleepInt);
+        window.sleepInt = setInterval(() => {
+            state.pet.energy = Math.min(100, state.pet.energy + 10);
+            updateUI();
+            if(!state.pet.isSleeping || state.pet.energy >= 100) clearInterval(window.sleepInt);
+        }, 3000);
+    }
+    updateUI(); 
+    buildPetDOM(); // Пересобираем, чтобы закрылись глаза
+};
+
+// 3. ОПТИМИЗАЦИЯ ДВИЖКА ХОДЬБЫ (Чтобы не жрал батарею)
+// Останавливаем старый тяжелый цикл
+petState = 'idle'; 
+// Запускаем новый облегченный цикл
+setInterval(() => {
+    const container = document.getElementById('pet-container');
+    const legL = document.getElementById('leg-l');
+    const legR = document.getElementById('leg-r');
+    const armL = document.getElementById('arm-l');
+    const armR = document.getElementById('arm-r');
+    
+    if (!container || !legL) return; // Защита, если DOM еще не готов
+
+    // Логика смены состояний
+    if(Math.random() < 0.05) {
+        if(state.pet.isSleeping || state.pet.ignore) petState = 'idle';
+        else {
+            petState = Math.random() < 0.6 ? 'walking' : 'idle';
+            if(petState === 'walking') dir = Math.random() > 0.5 ? 1 : -1;
+        }
+    }
+
+    // Движение
+    if(petState === 'walking' && !state.pet.ignore && !state.pet.isSleeping) {
+        petX += dir * 2;
+        if(petX > window.innerWidth - 150) { petX = window.innerWidth - 150; dir = -1; }
+        if(petX < 10) { petX = 10; dir = 1; }
+        container.style.transform = `translateX(${petX}px) scaleX(${dir})`;
+        
+        // Анимация лапок (через CSS transition)
+        legL.style.transform = `rotate(${Math.sin(Date.now() / 100) * 20}deg)`;
+        legR.style.transform = `rotate(${-Math.sin(Date.now() / 100) * 20}deg)`;
+        armL.style.transform = `rotate(${-Math.sin(Date.now() / 100) * 20}deg)`;
+        armR.style.transform = `rotate(${Math.sin(Date.now() / 100) * 20}deg)`;
+    } else {
+        legL.style.transform = `rotate(0deg)`;
+        legR.style.transform = `rotate(0deg)`;
+        armL.style.transform = `rotate(0deg)`;
+        armR.style.transform = `rotate(0deg)`;
+    }
+}, 50); // 50мс = плавно и не грузит телефон
+
+// Пересобираем питомца при старте, чтобы применить фиксы
+setTimeout(() => { if(manifest) buildPetDOM(); }, 1000);
+</script><script>
+// --- ЭТАП 7: 2.5D ЭФФЕКТ (ОБЪЕМ) И ФИКС ЗРАЧКОВ ---
+// Перехватываем функцию сборки питомца
+const originalBuildPetDOM_2 = buildPetDOM;
+
+buildPetDOM = function() {
+    originalBuildPetDOM_2();
+    
+    const svg = document.querySelector('#pet-svg-wrapper svg');
+    if (!svg) return;
+
+    // 1. ДОБАВЛЯЕМ SVG-ФИЛЬТРЫ ДЛЯ 2.5D (ТЕНИ)
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        defs.innerHTML = `
+            <filter id="shadow-soft" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+            </filter>
+            <filter id="shadow-strong" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000" flood-opacity="0.25"/>
+            </filter>
+        `;
+        svg.prepend(defs);
+    }
+
+    // Применяем фильтры к группам. 
+    // ВАЖНО: Мы ищем группы по их ID или порядку. 
+    // Рюкзак (сзади) - легкая тень
+    const backpackG = svg.querySelectorAll('g')[0]; 
+    if (backpackG) backpackG.setAttribute('filter', 'url(#shadow-soft)');
+    
+    // Тело - легкая тень
+    const bodyG = svg.querySelectorAll('g')[7]; 
+    if (bodyG) bodyG.setAttribute('filter', 'url(#shadow-soft)');
+
+    // Голова - тень посильнее (чтобы выделялась)
+    const headG = svg.querySelectorAll('g')[10]; 
+    if (headG) headG.setAttribute('filter', 'url(#shadow-strong)');
+
+    // 2. ЗРАЧКИ (Чтобы глаза были "живыми")
+    if (manifest && !state.pet.isSleeping) {
+        // Левый зрачок
+        const pupilL = manifest.parts.find(x => x.id === "05_pupil_left");
+        if (pupilL) {
+            const gL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gL.setAttribute("transform", `translate(165, 172)`); 
+            gL.innerHTML = `<image href="${pupilL.file}" x="${-pupilL.pivot[0]}" y="${-pupilL.pivot[1]}" width="${pupilL.size[0]}" height="${pupilL.size[1]}" />`;
+            svg.appendChild(gL);
+        }
+        // Правый зрачок
+        const pupilR = manifest.parts.find(x => x.id === "06_pupil_right");
+        if (pupilR) {
+            const gR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gR.setAttribute("transform", `translate(235, 172)`);
+            gR.innerHTML = `<image href="${pupilR.file}" x="${-pupilR.pivot[0]}" y="${-pupilR.pivot[1]}" width="${pupilR.size[0]}" height="${pupilR.size[1]}" />`;
+            svg.appendChild(gR);
+        }
+    }
+};
+
+// Пересобираем питомца сразу после загрузки страницы, чтобы применить тени и зрачки
+setTimeout(() => { if(manifest) buildPetDOM(); }, 1000);
+</script><script>
+// ==========================================
+// ФИНАЛЬНЫЙ ПАТЧ: 2.5D, ЗРАЧКИ, РЕАКЦИИ, ХОДЬБА
+// ==========================================
+
+// 1. ФИКС ЗРАЧКОВ И 2.5D ЭФФЕКТ (ОБЪЁМ)
+const originalBuildPetDOM_Final = buildPetDOM;
+buildPetDOM = function() {
+    originalBuildPetDOM_Final();
+    
+    const svg = document.querySelector('#pet-svg-wrapper svg');
+    if (!svg) return;
+
+    // --- ДОБАВЛЯЕМ SVG-ФИЛЬТРЫ ДЛЯ 2.5D ---
+    let defs = svg.querySelector('defs');
+    if (!defs) {
+        defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+        defs.innerHTML = `
+            <filter id="shadow-soft" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#000" flood-opacity="0.15"/>
+            </filter>
+            <filter id="shadow-strong" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="6" stdDeviation="4" flood-color="#000" flood-opacity="0.25"/>
+            </filter>
+        `;
+        svg.prepend(defs);
+    }
+
+    // Применяем тени к деталям
+    const groups = svg.querySelectorAll('g');
+    if (groups[0]) groups[0].setAttribute('filter', 'url(#shadow-soft)'); // Рюкзак
+    if (groups[7]) groups[7].setAttribute('filter', 'url(#shadow-soft)'); // Тело
+    if (groups[10]) groups[10].setAttribute('filter', 'url(#shadow-strong)'); // Голова
+
+    // --- ЗРАЧКИ ---
+    if (manifest && !state.pet.isSleeping) {
+        const pupilL = manifest.parts.find(x => x.id === "05_pupil_left");
+        if (pupilL) {
+            const gL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gL.setAttribute("transform", `translate(165, 172)`); 
+            gL.innerHTML = `<image href="${pupilL.file}" x="${-pupilL.pivot[0]}" y="${-pupilL.pivot[1]}" width="${pupilL.size[0]}" height="${pupilL.size[1]}" />`;
+            svg.appendChild(gL);
+        }
+        const pupilR = manifest.parts.find(x => x.id === "06_pupil_right");
+        if (pupilR) {
+            const gR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            gR.setAttribute("transform", `translate(235, 172)`);
+            gR.innerHTML = `<image href="${pupilR.file}" x="${-pupilR.pivot[0]}" y="${-pupilR.pivot[1]}" width="${pupilR.size[0]}" height="${pupilR.size[1]}" />`;
+            svg.appendChild(gR);
+        }
+    }
+};
+
+// 2. ФИКС РЕАКЦИЙ НА КНОПКИ (РОТ И ГЛАЗА)
+const originalFeedPet_Final = feedPet;
+feedPet = function() {
+    if(state.hearts < 10) return alert('Нужно больше сердечек!');
+    if(state.pet.isSleeping) return alert('Питомец спит.');
+    
+    state.hearts -= 10;
+    state.pet.hunger = Math.min(100, state.pet.hunger + 30);
+    state.pet.mouth = '14_mouth_open'; // Открываем рот
+    updateUI(); 
+    buildPetDOM(); // Пересобираем, чтобы рот появился
+    
+    setTimeout(() => { 
+        state.pet.mouth = null; 
+        buildPetDOM(); // Возвращаем обычный рот
+    }, 1500);
+};
+
+const originalSleepPet_Final = sleepPet;
+sleepPet = function() {
+    state.pet.isSleeping = !state.pet.isSleeping;
+    
+    if(state.pet.isSleeping) {
+        if(window.sleepInt) clearInterval(window.sleepInt);
+        window.sleepInt = setInterval(() => {
+            state.pet.energy = Math.min(100, state.pet.energy + 10);
+            updateUI();
+            if(!state.pet.isSleeping || state.pet.energy >= 100) clearInterval(window.sleepInt);
+        }, 3000);
+    }
+    updateUI(); 
+    buildPetDOM(); // Пересобираем, чтобы закрылись глаза
+};
+
+// 3. ОПТИМИЗАЦИЯ ДВИЖКА ХОДЬБЫ
+petState = 'idle'; 
+setInterval(() => {
+    const container = document.getElementById('pet-container');
+    const legL = document.getElementById('leg-l');
+    const legR = document.getElementById('leg-r');
+    const armL = document.getElementById('arm-l');
+    const armR = document.getElementById('arm-r');
+    
+    if (!container || !legL) return;
+
+    if(Math.random() < 0.05) {
+        if(state.pet.isSleeping || state.pet.ignore) petState = 'idle';
+        else {
+            petState = Math.random() < 0.6 ? 'walking' : 'idle';
+            if(petState === 'walking') dir = Math.random() > 0.5 ? 1 : -1;
+        }
+    }
+
+    if(petState === 'walking' && !state.pet.ignore && !state.pet.isSleeping) {
+        petX += dir * 2;
+        if(petX > window.innerWidth - 150) { petX = window.innerWidth - 150; dir = -1; }
+        if(petX < 10) { petX = 10; dir = 1; }
+        container.style.transform = `translateX(${petX}px) scaleX(${dir})`;
+        
+        legL.style.transform = `rotate(${Math.sin(Date.now() / 100) * 20}deg)`;
+        legR.style.transform = `rotate(${-Math.sin(Date.now() / 100) * 20}deg)`;
+        armL.style.transform = `rotate(${-Math.sin(Date.now() / 100) * 20}deg)`;
+        armR.style.transform = `rotate(${Math.sin(Date.now() / 100) * 20}deg)`;
+    } else {
+        legL.style.transform = `rotate(0deg)`;
+        legR.style.transform = `rotate(0deg)`;
+        armL.style.transform = `rotate(0deg)`;
+        armR.style.transform = `rotate(0deg)`;
+    }
+}, 50);
+
+// Пересобираем питомца при старте, чтобы применить 2.5D
+setTimeout(() => { if(manifest) buildPetDOM(); }, 1500);
 </script>
 </body>
 </html>

@@ -181,7 +181,7 @@ function switchTab(id) {
     document.getElementById(`nav-${id}`).classList.add('active');
     if(id === 'lessons') loadTask();
 }
-
+</script><script>
 // --- СБОРКА ПИТОМЦА ---
 async function initPet() {
     try {
@@ -195,28 +195,76 @@ async function initPet() {
 function createImg(id) {
     const p = manifest.parts.find(x => x.id === id);
     if(!p) return '';
-    return `<image href="${p.file}" x="${-p.pivot[0]}" y="${-p.pivot[1]}" width="${p.size[0]}" height="${p.size[1]}" />`;
+    // Оборачиваем каждую картинку в отдельный <g>, чтобы ничего не съезжало
+    return `<g transform="translate(${-p.pivot[0]}, ${-p.pivot[1]})"><image href="${p.file}" width="${p.size[0]}" height="${p.size[1]}" /></g>`;
 }
 
 function buildPetDOM() {
     const wrapper = document.getElementById('pet-svg-wrapper');
+    
     let mouth = state.pet.mouth ? state.pet.mouth : (state.pet.hunger < 30 ? "15_mouth_sad" : "13_mouth_smile");
     let eyes = state.pet.isSleeping ? createImg("07_lid_left") + createImg("08_lid_right") : createImg("03_eye_left") + createImg("04_eye_right") + createImg("05_pupil_left") + createImg("06_pupil_right");
 
     wrapper.innerHTML = `
     <svg viewBox="0 0 400 520">
+        <!-- Рюкзак -->
         <g transform="translate(200, 345)">${createImg("19_backpack")}</g>
-        <g id="leg-l" style="transform-origin: 176px 408px;"><g transform="translate(176, 408)">${createImg("26_thigh_left")}<g transform="translate(0, 36)">${createImg("27_shin_left")}</g><g transform="translate(0, 72)">${createImg("28_foot_left")}</g></g></g>
-        <g id="leg-r" style="transform-origin: 224px 408px;"><g transform="translate(224, 408)">${createImg("29_thigh_right")}<g transform="translate(0, 36)">${createImg("30_shin_right")}</g><g transform="translate(0, 72)">${createImg("31_foot_right")}</g></g></g>
+        
+        <!-- Ноги -->
+        <g id="leg-l" style="transform-origin: 176px 408px;">
+            <g transform="translate(176, 408)">
+                ${createImg("26_thigh_left")}
+                <g transform="translate(0, 36)">${createImg("27_shin_left")}</g>
+                <g transform="translate(0, 72)">${createImg("28_foot_left")}</g>
+            </g>
+        </g>
+        <g id="leg-r" style="transform-origin: 224px 408px;">
+            <g transform="translate(224, 408)">
+                ${createImg("29_thigh_right")}
+                <g transform="translate(0, 36)">${createImg("30_shin_right")}</g>
+                <g transform="translate(0, 72)">${createImg("31_foot_right")}</g>
+            </g>
+        </g>
+
+        <!-- Тело -->
         <g transform="translate(200, 330)">${createImg("17_body")}</g>
         <g transform="translate(200, 330)">${createImg("18_vest")}</g>
-        <g id="arm-l" style="transform-origin: 142px 296px;"><g transform="translate(142, 296)">${createImg("20_shoulder_left")}<g transform="translate(0, 36)">${createImg("21_forearm_left")}</g><g transform="translate(0, 70)">${createImg("22_hand_left")}</g></g></g>
-        <g id="arm-r" style="transform-origin: 258px 296px;"><g transform="translate(258, 296)">${createImg("23_shoulder_right")}<g transform="translate(0, 36)">${createImg("24_forearm_right")}</g><g transform="translate(0, 70)">${createImg("25_hand_right")}</g></g></g>
+
+        <!-- Руки -->
+        <g id="arm-l" style="transform-origin: 142px 296px;">
+            <g transform="translate(142, 296)">
+                ${createImg("20_shoulder_left")}
+                <g transform="translate(0, 36)">${createImg("21_forearm_left")}</g>
+                <g transform="translate(0, 70)">${createImg("22_hand_left")}</g>
+            </g>
+        </g>
+        <g id="arm-r" style="transform-origin: 258px 296px;">
+            <g transform="translate(258, 296)">
+                ${createImg("23_shoulder_right")}
+                <g transform="translate(0, 36)">${createImg("24_forearm_right")}</g>
+                <g transform="translate(0, 70)">${createImg("25_hand_right")}</g>
+            </g>
+        </g>
+
+        <!-- Голова -->
         <g transform="translate(200, 170)">${createImg("01_head")}</g>
         <g transform="translate(200, 160)">${createImg("09_headphones")}</g>
         <g transform="translate(200, 96)">${createImg("02_hair")}</g>
-        <g transform="translate(162, 168)">${eyes.split('</image>')[0]}</g>
-        <g transform="translate(238, 168)">${eyes.split('</image>')[1] || ''}</g>
+        
+        <!-- Глаза и Брови (разделены четко) -->
+        <g transform="translate(162, 168)">${createImg("10_brow_left")}</g>
+        <g transform="translate(238, 168)">${createImg("11_brow_right")}</g>
+        
+        <!-- Левыый глаз -->
+        <g transform="translate(162, 168)">
+            ${eyes.split('</g>')[0]}</g>
+        </g>
+        <!-- Правый глаз -->
+        <g transform="translate(238, 168)">
+            ${eyes.split('</g>')[1] || ''}</g>
+        </g>
+
+        <!-- Рот -->
         <g transform="translate(200, 208)">${createImg(mouth)}</g>
     </svg>`;
 }
@@ -301,7 +349,7 @@ function sleepPet() {
     }
     updateUI(); buildPetDOM();
 }
-
+</script><script>
 // --- ИГРА "ПОЙМАЙ ЯБЛОЧКО" ---
 let isPlaying = false, score = 0, basketPos = 50;
 function startGame() {

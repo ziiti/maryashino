@@ -14,7 +14,7 @@
     --border: #F5D6E0; --shadow: rgba(211,107,154,.15);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Comic Sans MS', system-ui, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; background-image: radial-gradient(circle at 10% 20%, #FFE0EC 0%, transparent 30%), radial-gradient(circle at 90% 80%, #F0D6FF 0%, transparent 30%); overflow-x: hidden; }
+body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 150px; background-image: radial-gradient(circle at 10% 20%, #FFE0EC 0%, transparent 30%), radial-gradient(circle at 90% 80%, #F0D6FF 0%, transparent 30%); overflow-x: hidden; }
 header {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white; padding: 12px 20px; display: flex; justify-content: space-between;
@@ -26,7 +26,7 @@ header {
 .brand h1 { font-size: 20px; letter-spacing: .5px; }
 .header-stats { display: flex; gap: 8px; align-items: center; }
 .stat-badge { background: rgba(255,255,255,.3); padding: 6px 12px; border-radius: 16px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 4px; }
-.container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+.container { max-width: 800px; margin: 20px auto; padding: 0 15px; position: relative; z-index: 10; }
 .nav-tabs { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
 .tab-btn {
     flex: 1; min-width: 80px; padding: 12px 4px; border: none; background: var(--card-bg);
@@ -38,21 +38,27 @@ header {
 .tab-content.active { display: block; animation: fadeIn .3s; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Питомец 2.5D */
-.pet-stage { position: relative; width: 100%; max-width: 300px; height: 350px; margin: 0 auto 20px; display: flex; justify-content: center; align-items: flex-end; }
-.pet-shadow { position: absolute; bottom: 0; width: 140px; height: 20px; background: radial-gradient(ellipse at center, rgba(0,0,0,0.2) 0%, transparent 70%); border-radius: 50%; animation: shadowPulse 3s infinite ease-in-out; }
-@keyframes shadowPulse { 0%, 100% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(0.9); opacity: 0.5; } }
-#petSvgWrapper { position: relative; z-index: 2; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.1)); animation: petBreathe 3.5s infinite ease-in-out; transform-origin: bottom center; }
-@keyframes petBreathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+/* ЖИВОЙ ПИТОМЕЦ НА ЭКРАНЕ */
+#freePet {
+    position: fixed; bottom: 0; left: 50px;
+    width: 140px; height: 180px; /* Уменьшенный размер для фона */
+    z-index: 50; pointer-events: none; /* Не мешает кликам */
+    transition: opacity 0.3s ease, transform 0.5s ease;
+    filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
+    transform-origin: bottom center;
+}
+#freePet svg { width: 100%; height: 100%; overflow: visible; }
+#freePet.ghost { opacity: 0.15 !important; }
+#freePet.walking svg { animation: walkBob 0.4s infinite alternate; }
+#freePet.sleeping svg { transform: rotate(-90deg) translateY(50px); }
 
-/* Анимации рук и ног */
-.arm-left { animation: armSwing 3s infinite ease-in-out; transform-origin: 142px 296px; }
-.arm-right { animation: armSwing 3s infinite ease-in-out reverse; transform-origin: 258px 296px; }
-.leg-left { animation: legBounce 3s infinite ease-in-out; transform-origin: 176px 408px; }
-.leg-right { animation: legBounce 3s infinite ease-in-out reverse; transform-origin: 224px 408px; }
-@keyframes armSwing { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(4deg); } }
-@keyframes legBounce { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(2deg); } }
+@keyframes walkBob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
 
+/* Управление питомцем */
+.pet-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+.pet-controls button { font-size: 13px; padding: 10px; min-height: 40px; }
+
+/* Прогресс-бары */
 .meters { display: grid; gap: 10px; margin-bottom: 20px; }
 .meter-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--text-light); margin-bottom: 4px; }
 .bar-bg { background: #EDF2F7; height: 14px; border-radius: 8px; overflow: hidden; }
@@ -61,6 +67,7 @@ header {
 .fill-happy { background: linear-gradient(90deg, #FF6B9D, #FF8A8A); }
 .fill-energy { background: linear-gradient(90deg, #4FACFE, #00F2FE); }
 
+/* Кнопки */
 .btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 12px 20px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; box-shadow: 0 4px 12px var(--shadow); }
 .btn:active { transform: scale(.97); }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
@@ -96,6 +103,9 @@ input:focus { border-color: var(--primary); }
 </style>
 </head>
 <body>
+
+<!-- ГУЛЯЮЩИЙ ПИТОМЕЦ -->
+<div id="freePet"></div>
 
 <header>
     <div class="brand">
@@ -150,7 +160,7 @@ input:focus { border-color: var(--primary); }
     <!-- ИГРОТЕКА -->
     <div id="gamesTab" class="tab-content">
         <h2 style="color: var(--primary-dark); margin-bottom: 8px;">🍎 Поймай яблочко</h2>
-        <p style="color: var(--text-light); margin-bottom: 10px; font-size:14px;">Двигай питомца стрелками или мышкой, чтобы ловить яблоки!</p>
+        <p style="color: var(--text-light); margin-bottom: 10px; font-size:14px;">Двигай питомца мышкой или пальцем, чтобы ловить яблоки!</p>
         <div style="display:flex; justify-content:space-between; font-weight:bold;">
             <span>Счёт: <span id="appleScore">0</span>/10</span>
             <span style="color:var(--warning);">Энергия: -15⚡</span>
@@ -164,12 +174,9 @@ input:focus { border-color: var(--primary); }
 
     <!-- ПИТОМЕЦ -->
     <div id="petTab" class="tab-content">
-        <div class="pet-stage">
-            <div class="pet-shadow"></div>
-            <div id="petSvgWrapper">
-                <svg id="petSvg" viewBox="0 0 400 520" width="280" height="364" xmlns="http://www.w3.org/2000/svg"></svg>
-            </div>
-        </div>
+        <h2 style="color: var(--primary-dark); text-align:center; margin-bottom: 10px;">🐾 Мой друг</h2>
+        <p style="text-align:center; color:var(--text-light); font-size:13px; margin-bottom:15px;">Твой питомец гуляет по экрану. Наведи на кнопку, чтобы он не мешал.</p>
+        
         <div class="meters">
             <div>
                 <div class="meter-label"><span>Сытость 🍎</span><span id="hungerVal">100%</span></div>
@@ -184,9 +191,12 @@ input:focus { border-color: var(--primary); }
                 <div class="bar-bg"><div class="bar-fill fill-energy" id="energyBar" style="width:100%"></div></div>
             </div>
         </div>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        
+        <div class="pet-controls">
             <button class="btn" onclick="feedPet()">Покормить (10 💖)</button>
             <button class="btn btn-secondary" onclick="playPet()">Поиграть (5 💖)</button>
+            <button class="btn btn-secondary" onclick="callPet()">Позвать</button>
+            <button class="btn btn-secondary" onclick="toggleIgnore()" id="ignoreBtn">Не отвлекай</button>
             <button class="btn btn-secondary" onclick="sleepPet()" style="grid-column: span 2;" id="sleepBtn">Уложить спать 😴</button>
         </div>
         <p id="petStatus" style="text-align:center; margin-top:15px; font-weight:bold; color:var(--primary);"></p>
@@ -211,15 +221,19 @@ input:focus { border-color: var(--primary); }
 
 <script>
 // --- СОСТОЯНИЕ ---
-const STORAGE_KEY = 'maryashino_v4';
+const STORAGE_KEY = 'maryashino_final_v5';
 const DEFAULT_STATE = {
     hearts: 50, solvedCount: 0, lessonsCompleted: 0, lessonTask: 0,
     soundOn: true,
-    pet: { hunger: 100, happy: 100, energy: 100, isSleeping: false, activeMouth: '12_mouth_smile' },
+    pet: { hunger: 100, happy: 100, energy: 100, isSleeping: false, ignore: false, activeMouth: null },
     currentTask: null
 };
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || JSON.parse(JSON.stringify(DEFAULT_STATE));
 let manifest = null;
+let petInterval = null;
+let petFSM = 'idle'; // idle, walking, sitting, sleeping
+let petX = 50;
+let walkDirection = 1;
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); updateUI(); }
 
@@ -235,10 +249,12 @@ function updateUI() {
     
     let status = "Питомец в порядке!";
     if (state.pet.isSleeping) status = "Питомец спит... 💤";
+    else if (state.pet.ignore) status = "Питомец не отвлекает.";
     else if (state.pet.hunger < 30) status = "Питомец голоден! 😢";
-    else if (state.pet.energy < 20) status = "Питомец устал и хочет спать.";
+    
     document.getElementById('petStatus').innerText = status;
     document.getElementById('sleepBtn').innerText = state.pet.isSleeping ? "Разбудить ☀️" : "Уложить спать 😴";
+    document.getElementById('ignoreBtn').innerText = state.pet.ignore ? "Можно играть" : "Не отвлекай";
 }
 
 function switchTab(id, btn) {
@@ -247,25 +263,24 @@ function switchTab(id, btn) {
     document.getElementById(id).classList.add('active');
     btn.classList.add('active');
     if(id === 'learnTab') renderTask();
-    if(id === 'petTab') drawPet();
 }
 
-// --- СБОРКА ПИТОМЦА ---
+// --- СБОРКА И АНИМАЦИЯ ПИТОМЦА (2.5D) ---
 async function loadManifest() {
     try {
         const res = await fetch('./manifest.json');
         manifest = await res.json();
-        drawPet();
+        initPetEngine();
     } catch(e) {
         console.error("Манифест не найден");
     }
 }
 
-function drawPet() {
-    if (!manifest || !state.pet) return;
-    const svg = document.getElementById('petSvg');
+function buildPetSVG(container, scale = 1) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 400 520");
     svg.innerHTML = '';
-    
+
     function addPart(id, className = '') {
         const p = manifest.parts.find(x => x.id === id);
         if (p) {
@@ -280,7 +295,7 @@ function drawPet() {
         }
     }
 
-    // Сборка слоями
+    // Сборка слоями (упрощенная, но красивая)
     addPart("19_backpack");
     addPart("26_thigh_left", "leg-left"); addPart("27_shin_left", "leg-left"); addPart("28_foot_left", "leg-left");
     addPart("29_thigh_right", "leg-right"); addPart("30_shin_right", "leg-right"); addPart("31_foot_right", "leg-right");
@@ -289,22 +304,16 @@ function drawPet() {
     addPart("23_shoulder_right", "arm-right"); addPart("24_forearm_right", "arm-right"); addPart("25_hand_right", "arm-right");
     addPart("01_head");
     
-    // Глаза
     addPart("03_eye_left"); addPart("04_eye_right");
     
     if (state.pet.isSleeping) {
         addPart("07_lid_left"); addPart("08_lid_right");
-        const zzz = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        zzz.setAttribute("x", 250); zzz.setAttribute("y", 120);
-        zzz.setAttribute("font-size", "30"); zzz.setAttribute("fill", "#4FACFE"); zzz.textContent = "Zzz";
-        svg.appendChild(zzz);
     } else {
         addPart("05_pupil_left"); addPart("06_pupil_right");
     }
     
     addPart("10_brow_left"); addPart("11_brow_right");
     
-    // Рот
     let mouth = "12_mouth_neutral";
     if (state.pet.activeMouth) mouth = state.pet.activeMouth;
     else if (state.pet.hunger < 30) mouth = "15_mouth_sad";
@@ -312,32 +321,97 @@ function drawPet() {
     addPart(mouth);
     
     addPart("09_headphones"); addPart("02_hair");
+    
+    container.appendChild(svg);
 }
 
-// --- ДЕЙСТВИЯ С ПИТОМЦЕМ ---
+// --- ДВИЖОК ЖИЗНИ ПИТОМЦА ---
+function initPetEngine() {
+    const petContainer = document.getElementById('freePet');
+    buildPetSVG(petContainer);
+    
+    // Стартовая позиция
+    petContainer.style.left = petX + 'px';
+
+    // Цикл принятия решений (раз в 3 секунды)
+    setInterval(() => {
+        if (state.pet.isSleeping) { petFSM = 'sleeping'; return; }
+        if (state.pet.ignore) { petFSM = 'idle'; return; }
+        
+        const rand = Math.random();
+        if (rand < 0.4) {
+            petFSM = 'walking';
+            walkDirection = Math.random() > 0.5 ? 1 : -1;
+            // Поворот питомца
+            petContainer.style.transform = `scaleX(${walkDirection})`;
+        } else if (rand < 0.7) {
+            petFSM = 'sitting';
+        } else {
+            petFSM = 'idle';
+        }
+        
+        petContainer.className = petFSM; // Для CSS
+    }, 3000);
+
+    // Цикл движения (каждые 50мс)
+    setInterval(() => {
+        if (petFSM === 'walking' && !state.pet.ignore && !state.pet.isSleeping) {
+            petX += walkDirection * 1.5;
+            // Границы экрана
+            if (petX > window.innerWidth - 140) { petX = window.innerWidth - 140; walkDirection = -1; petContainer.style.transform = `scaleX(-1)`; }
+            if (petX < 0) { petX = 0; walkDirection = 1; petContainer.style.transform = `scaleX(1)`; }
+            petContainer.style.left = petX + 'px';
+        }
+    }, 50);
+}
+
+// Эффект призрака при наведении на кнопки
+document.addEventListener('mouseover', (e) => {
+    if (e.target.closest('button, input, .tab-btn')) {
+        document.getElementById('freePet').classList.add('ghost');
+    }
+});
+document.addEventListener('mouseout', (e) => {
+    if (e.target.closest('button, input, .tab-btn')) {
+        document.getElementById('freePet').classList.remove('ghost');
+    }
+});
+
+// --- ДЕЙСТВИЯ ---
 function feedPet() {
     if (state.hearts < 10) return alert('Не хватает сердечек!');
     if (state.pet.isSleeping) return alert('Питомец спит.');
     state.hearts -= 10;
     state.pet.hunger = Math.min(100, state.pet.hunger + 30);
     state.pet.happy = Math.min(100, state.pet.happy + 5);
-    state.pet.activeMouth = '14_mouth_open'; // открывает рот
-    save(); drawPet();
-    setTimeout(() => { state.pet.activeMouth = null; save(); drawPet(); }, 1000);
+    state.pet.activeMouth = '14_mouth_open';
+    save(); updatePetFace();
+    setTimeout(() => { state.pet.activeMouth = null; save(); updatePetFace(); }, 1000);
 }
 
 function playPet() {
     if (state.hearts < 5) return alert('Не хватает сердечек!');
-    if (state.pet.energy < 15) return alert('Питомец слишком устал. Уложите спать.');
-    if (state.pet.isSleeping) return alert('Питомец спит.');
+    if (state.pet.energy < 15) return alert('Питомец устал.');
     state.hearts -= 5;
     state.pet.happy = Math.min(100, state.pet.happy + 20);
     state.pet.energy = Math.max(0, state.pet.energy - 15);
-    save(); drawPet();
-    
-    const wrapper = document.getElementById('petSvgWrapper');
-    wrapper.style.transform = 'rotate(5deg) scale(1.05)';
-    setTimeout(() => wrapper.style.transform = 'none', 300);
+    save();
+    const petContainer = document.getElementById('freePet');
+    petContainer.style.transform += ' rotate(10deg) scale(1.1)';
+    setTimeout(() => petContainer.style.transform = petContainer.style.transform.replace(' rotate(10deg) scale(1.1)', ''), 300);
+}
+
+function callPet() {
+    if (state.pet.isSleeping) return alert('Питомец спит.');
+    petX = window.innerWidth / 2 - 70;
+    document.getElementById('freePet').style.left = petX + 'px';
+    petFSM = 'idle';
+}
+
+function toggleIgnore() {
+    state.pet.ignore = !state.pet.ignore;
+    if (state.pet.ignore) petFSM = 'idle';
+    save();
 }
 
 let sleepInterval = null;
@@ -345,32 +419,54 @@ function sleepPet() {
     if (state.pet.isSleeping) {
         state.pet.isSleeping = false;
         clearInterval(sleepInterval);
-        save(); drawPet();
+        save(); updatePetFace();
         return;
     }
     state.pet.isSleeping = true;
-    save(); drawPet();
+    petFSM = 'sleeping';
+    save(); updatePetFace();
+    
     sleepInterval = setInterval(() => {
         state.pet.energy = Math.min(100, state.pet.energy + 15);
-        save(); drawPet();
+        save();
         if (state.pet.energy >= 100) {
             state.pet.isSleeping = false;
+            petFSM = 'idle';
             clearInterval(sleepInterval);
-            save(); drawPet();
+            save(); updatePetFace();
         }
     }, 3000);
 }
 
-// --- УРОКИ (Демо-задача для теста) ---
+function updatePetFace() {
+    const petContainer = document.getElementById('freePet');
+    petContainer.innerHTML = '';
+    buildPetSVG(petContainer);
+    petContainer.className = petFSM;
+}
+
+// --- ЗАДАЧИ (ПОЛНЫЙ ПУЛ) ---
+const TASKS = [
+    { type: 'Арифметика', q: 'У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?', a: '5', guide: 'Отдала — значит вычитаем. 8 - 3 = ?' },
+    { type: 'Арифметика', q: 'На ветке сидело 12 птиц. 4 улетели. Сколько осталось?', a: '8', guide: 'Улетели — вычитаем. 12 - 4 = ?' },
+    { type: 'Арифметика', q: 'У Пети 5 машинок, а у Васи 7. Сколько всего?', a: '12', guide: 'Всего — значит складываем. 5 + 7 = ?' },
+    { type: 'Логика', q: 'Все фрукты полезны. Яблоко — фрукт. Что следует? (Напиши "полезно")', a: 'полезно', guide: 'Яблоко — это фрукт. Значит оно...' },
+    { type: 'Логика', q: 'Все коты мяукают. Мурка — кот. Что делает Мурка? (Напиши "мяукает")', a: 'мяукает', guide: 'Мурка — кот, значит она...' },
+    { type: 'Внимание', q: 'Найди лишнее слово: яблоко, груша, морковь, банан. (Введи лишнее)', a: 'морковь', guide: 'Морковь — это овощ, а остальное — фрукты.' },
+    { type: 'IQ', q: 'Продолжи ряд: 2, 4, 6, 8, ... Какое следующее число?', a: '10', guide: 'Каждый раз прибавляется 2.' },
+    { type: 'IQ', q: 'Продолжи ряд: 1, 3, 5, 7, ... Какое следующее число?', a: '9', guide: 'Нечётные числа. Прибавляется 2.' },
+    { type: 'IQ', q: 'Что тяжелее: 1 кг ваты или 1 кг железа? (Напиши "одинаково")', a: 'одинаково', guide: 'Вес одинаковый — 1 килограмм!' }
+];
+
 function renderTask() {
-    const task = { type: 'subtraction', text: `У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?`, answer: '5', guide: ["Сколько было?", "Отдала — это минус или плюс?", "8 - 3 = ?"] };
+    const task = TASKS[Math.floor(Math.random() * TASKS.length)];
     state.currentTask = task;
-    document.getElementById('problemText').innerText = task.text;
-    document.getElementById('taskTypeLabel').innerText = "Вычитание";
+    document.getElementById('problemText').innerText = task.q;
+    document.getElementById('taskTypeLabel').innerText = task.type;
     document.getElementById('zitiText').innerText = "Внимательно прочитай задачу.";
     document.getElementById('scaffoldArea').innerHTML = `
         <div class="scaffold-step">
-            <input type="text" id="finalAns" placeholder="Твой ответ" inputmode="numeric">
+            <input type="text" id="finalAns" placeholder="Твой ответ">
             <button class="btn" onclick="submitInput()">Отправить</button>
         </div>`;
     document.getElementById('lessonCounter').innerText = `${state.lessonTask}/5`;
@@ -378,8 +474,8 @@ function renderTask() {
 }
 
 function submitInput() {
-    const val = document.getElementById('finalAns').value.trim();
-    if (val === state.currentTask.answer) {
+    const val = document.getElementById('finalAns').value.trim().toLowerCase();
+    if (val === state.currentTask.a.toLowerCase()) {
         state.hearts += 10;
         state.solvedCount++;
         state.lessonTask++;
@@ -387,19 +483,19 @@ function submitInput() {
         else { alert('Верно! +10 сердечек 💖'); }
         save(); renderTask();
     } else {
-        document.getElementById('zitiText').innerText = "Почти! Подсказка: " + state.currentTask.guide[1];
+        document.getElementById('zitiText').innerText = "Почти! Подсказка: " + state.currentTask.guide;
     }
 }
 
 function triggerDontKnow() {
-    document.getElementById('zitiText').innerText = "Подсказка: " + state.currentTask.guide[0];
+    document.getElementById('zitiText').innerText = "Подсказка: " + state.currentTask.guide;
 }
 
-// --- ИГРА "ПОЙМАЙ ЯБЛОЧКО" ---
+// --- ИГРА ---
 let gameLoop, appleLoop, score = 0, petPos = 50, isPlaying = false;
 
 function startCatchGame() {
-    if (state.pet.energy < 15) return alert('Питомец устал, покормите или уложите спать!');
+    if (state.pet.energy < 15) return alert('Питомец устал!');
     if (isPlaying) return;
     isPlaying = true;
     state.pet.energy -= 15;
@@ -410,7 +506,6 @@ function startCatchGame() {
     document.getElementById('catcherPet').style.left = '50%';
     save();
 
-    // Управление
     const area = document.getElementById('catchArea');
     area.onmousemove = (e) => {
         const rect = area.getBoundingClientRect();
@@ -440,7 +535,6 @@ function startCatchGame() {
             apple.style.top = top + 'px';
             if (top > 250) {
                 clearInterval(fall);
-                // Проверка на поимку
                 if (Math.abs(appleX - petPos) < 15) {
                     score++;
                     document.getElementById('appleScore').innerText = score;
@@ -457,7 +551,7 @@ function endGame() {
     clearInterval(appleLoop);
     document.getElementById('catchArea').style.display = 'none';
     document.getElementById('startGameBtn').style.display = 'block';
-    alert('Молодец! Ты поймал 10 яблок! 🍎 +5 сердечек!');
+    alert('Молодец! +5 сердечек!');
     state.hearts += 5;
     state.pet.happy = Math.min(100, state.pet.happy + 10);
     save();
@@ -486,7 +580,6 @@ function toggleSound() {
 // --- СТАРТ ---
 loadManifest();
 updateUI();
-if (state.pet.isSleeping) sleepPet();
 </script>
 </body>
 </html>

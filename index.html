@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Маряшино — Уроки с Зити</title>
+<link rel="icon" href="./maryashino.png">
+<style>
+:root {
+    --primary: #D36B9A; --primary-light: #F4A6C1; --primary-dark: #A44B74;
+    --accent: #FFB6D9; --bg: #FFF5F8; --card-bg: #FFFFFF;
+    --text: #4A2C3A; --text-light: #8A6373;
+    --heart: #FF6B9D; --success: #7BC89C; --warning: #F0A080;
+    --border: #F5D6E0; --shadow: rgba(211,107,154,.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Comic Sans MS', system-ui, sans-serif; }
+body { background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 40px; background-image: radial-gradient(circle at 10% 20%, #FFE0EC 0%, transparent 30%), radial-gradient(circle at 90% 80%, #F0D6FF 0%, transparent 30%); }
+header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white; padding: 12px 20px; display: flex; justify-content: space-between;
+    align-items: center; box-shadow: 0 4px 20px var(--shadow);
+    position: sticky; top: 0; z-index: 100; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 42px; height: 42px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+.brand-fallback { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,.25); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.brand h1 { font-size: 20px; letter-spacing: .5px; }
+.header-stats { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.stat-badge { background: rgba(255,255,255,.3); padding: 6px 12px; border-radius: 16px; font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 4px; }
+.icon-btn { background: rgba(255,255,255,.3); border: none; color: white; width: 36px; height: 36px; border-radius: 50%; font-size: 17px; cursor: pointer; transition: .2s; }
+.icon-btn:active { transform: scale(.9); }
+.container { max-width: 800px; margin: 20px auto; padding: 0 15px; }
+.nav-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.tab-btn {
+    flex: 1; min-width: 100px; padding: 12px 8px; border: none; background: var(--card-bg);
+    color: var(--text-light); border-radius: 16px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: .2s; box-shadow: 0 2px 8px var(--shadow);
+}
+.tab-btn.active { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; transform: translateY(-2px); }
+.tab-content { display: none; background: var(--card-bg); padding: 22px; border-radius: 24px; box-shadow: 0 8px 30px var(--shadow); }
+.tab-content.active { display: block; animation: fadeIn .3s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Аватары Зити и анимации */
+.ziti-card { display: flex; gap: 14px; align-items: center; background: linear-gradient(135deg, #FFF0F6, #FFE0EC); padding: 16px; border-radius: 18px; margin-bottom: 18px; }
+.ziti-avatar-wrapper { position: relative; flex-shrink: 0; }
+.ziti-avatar { 
+    width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--primary-light); 
+    object-fit: cover; display: block;
+    animation: breathe 3s infinite ease-in-out;
+    transition: box-shadow 0.3s ease;
+}
+.ziti-avatar-fallback { width: 70px; height: 70px; border-radius: 50%; border: 3px solid var(--primary-light); background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 34px; flex-shrink: 0; }
+.ziti-avatar-wrapper::after {
+    content: ''; position: absolute; inset: 3px; border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.3) 0%, transparent 20%);
+    pointer-events: none;
+}
+.ziti-info h3 { font-size: 16px; color: var(--primary-dark); }
+.ziti-info p { font-size: 13px; color: var(--text-light); }
+
+/* Диалог */
+.ziti-dialog { display: flex; gap: 10px; align-items: flex-start; background: #FFF0F6; border: 1.5px solid var(--border); padding: 12px 14px; border-radius: 16px; margin: 12px 0; font-size: 14px; line-height: 1.5; transition: border-color 0.3s, box-shadow 0.3s; }
+.ziti-dialog img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary-light); flex-shrink: 0; animation: breathe 3s infinite ease-in-out; }
+.ziti-dialog .fb { width: 44px; height: 44px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+
+/* Состояния анимации */
+.ziti-avatar.mood-happy, .ziti-dialog img.mood-happy { animation: jump 0.6s ease; box-shadow: 0 0 20px 5px rgba(255, 107, 157, 0.6); }
+.ziti-avatar.mood-think, .ziti-dialog img.mood-think { animation: sway 1.5s infinite ease-in-out; }
+.ziti-avatar.mood-strict, .ziti-dialog img.mood-strict { animation: shake 0.4s ease; box-shadow: 0 0 15px 2px rgba(240, 160, 128, 0.6); }
+
+@keyframes breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes jump { 0%, 100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-15px) scale(1.1); } 60% { transform: translateY(0) scale(1.05); } }
+@keyframes sway { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-4deg); } 75% { transform: rotate(4deg); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+/* Прогресс урока */
+.lesson-progress { margin-bottom: 14px; }
+.lesson-progress-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 6px; color: var(--primary-dark); }
+.lesson-bar { background: #FFE0EC; height: 10px; border-radius: 8px; overflow: hidden; }
+.lesson-fill { height: 100%; background: linear-gradient(90deg, var(--heart), var(--primary)); transition: width .4s; border-radius: 8px; }
+
+/* Задача */
+.problem-card { background: linear-gradient(135deg, #FFF0F6, #FFEAF3); border-radius: 18px; padding: 16px; margin-bottom: 14px; border-left: 6px solid var(--primary); }
+.problem-title { font-size: 12px; color: var(--primary); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; letter-spacing: .5px; }
+.problem-text { font-size: 17px; font-weight: 600; line-height: 1.5; }
+.scaffold-step { background: var(--card-bg); border: 2px dashed var(--primary-light); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+.step-num { font-size: 12px; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+.options-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+
+/* Кнопки */
+.btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 12px 20px; border-radius: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: .2s; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 48px; box-shadow: 0 4px 12px var(--shadow); }
+.btn:active { transform: scale(.97); }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-secondary { background: #FFE0EC; color: var(--primary-dark); box-shadow: none; }
+.btn-warning { background: linear-gradient(135deg, #F0A080, #F4B89C); }
+.btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); box-shadow: none; }
+
+input[type="text"], input[type="password"] {
+    width: 100%; padding: 12px 16px; border: 2px solid var(--border);
+    border-radius: 14px; font-size: 16px; margin: 8px 0 12px; outline: none;
+    background: var(--card-bg); color: var(--text); min-height: 48px;
+}
+input:focus { border-color: var(--primary); }
+
+/* Достижения */
+.badges-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(95px, 1fr)); gap: 10px; margin-top: 12px; }
+.badge { text-align: center; padding: 12px 6px; border-radius: 16px; background: #FFF0F6; opacity: .35; transition: .3s; }
+.badge.unlocked { opacity: 1; background: linear-gradient(135deg, #FFE0EC, #FFD0E5); box-shadow: 0 4px 12px var(--shadow); }
+.badge-icon { font-size: 30px; }
+.badge-name { font-size: 11px; font-weight: 700; margin-top: 4px; color: var(--primary-dark); }
+
+/* Игра */
+.pattern-row { display: flex; gap: 12px; justify-content: center; font-size: 42px; margin: 25px 0; flex-wrap: wrap; }
+
+/* Аналитика */
+.stat-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.stat-row:last-child { border-bottom: none; }
+
+/* Онбординг */
+.overlay { position: fixed; inset: 0; background: rgba(74,44,58,.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.overlay.hidden { display: none; }
+.onboarding { background: var(--card-bg); border-radius: 24px; padding: 30px 22px; max-width: 420px; width: 100%; text-align: center; animation: slideUp .4s; }
+@keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.onboarding img { width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--primary-light); margin-bottom: 15px; object-fit: cover; }
+.onboarding .fb { width: 120px; height: 120px; border-radius: 50%; background: var(--accent); display: inline-flex; align-items: center; justify-content: center; font-size: 60px; margin-bottom: 15px; }
+.onboarding h2 { margin-bottom: 10px; color: var(--primary-dark); }
+.onboarding p { color: var(--text-light); margin-bottom: 16px; line-height: 1.5; font-size: 15px; }
+
+/* Конфетти */
+.confetti { position: fixed; top: 0; width: 8px; height: 14px; pointer-events: none; animation: fall 1.6s linear forwards; z-index: 9999; border-radius: 2px; }
+@keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
+
+@media (max-width: 500px) {
+    .brand h1 { font-size: 16px; }
+    .tab-btn { font-size: 12px; min-width: 80px; padding: 10px 6px; }
+    .ziti-avatar, .ziti-avatar-fallback { width: 56px; height: 56px; }
+    .options-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <img src="./maryashino.png" alt="Маряшино" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'brand-fallback',innerText:'👧'}))">
+        <h1>Маряшино</h1>
+    </div>
+    <div class="header-stats">
+        <div class="stat-badge">💖 <span id="heartVal">0</span></div>
+        <div class="stat-badge">⭐ <span id="levelVal">1</span></div>
+        <button class="icon-btn" id="soundBtn" onclick="toggleSound()" title="Звук">🔊</button>
+    </div>
+</header>
+
+<div class="container">
+    <div class="nav-tabs">
+        <button class="tab-btn active" onclick="switchTab('zitiTab', this)">👨‍🏫 Зити</button>
+        <button class="tab-btn" onclick="switchTab('learnTab', this)">📚 Уроки</button>
+        <button class="tab-btn" onclick="switchTab('gamesTab', this)">🎮 Игротека</button>
+        <button class="tab-btn" onclick="switchTab('achTab', this)">🏆 Награды</button>
+        <button class="tab-btn" onclick="switchTab('parentTab', this)">🔒 Родителям</button>
+    </div>
+
+    <!-- ЗИТИ -->
+    <div id="zitiTab" class="tab-content active">
+        <div class="ziti-card">
+            <div class="ziti-avatar-wrapper">
+                <img src="./ziti.png" alt="Зити" class="ziti-avatar" id="zitiCardAvatar" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'ziti-avatar-fallback',innerText:'👨‍🏫'}))">
+            </div>
+            <div class="ziti-info">
+                <h3>Зити — твой дядя и учитель</h3>
+                <p id="zitiGreeting">Привет, племяшка! Я помогу тебе разобраться с любыми задачками. Не бойся ошибаться — мы всему научимся вместе!</p>
+            </div>
+        </div>
+        <h3 style="margin: 15px 0 10px; color: var(--primary-dark);">📊 Твой прогресс</h3>
+        <div class="stat-row"><span>Уровень</span><strong id="zitiLevel">1</strong></div>
+        <div class="stat-row"><span>Решено задач</span><strong id="zitiSolved">0</strong></div>
+        <div class="stat-row"><span>Пройдено уроков</span><strong id="zitiLessons">0</strong></div>
+        <div class="stat-row"><span>Сердечек собрано</span><strong id="zitiHearts">0 💖</strong></div>
+        <div class="stat-row"><span>Серия дней</span><strong id="zitiStreak">0</strong></div>
+        <div style="margin-top: 20px; text-align: center;">
+            <button class="btn" onclick="switchTab('learnTab', document.querySelectorAll('.tab-btn')[1])">Начать урок →</button>
+        </div>
+    </div>
+
+    <!-- УРОКИ -->
+    <div id="learnTab" class="tab-content">
+        <div class="lesson-progress">
+            <div class="lesson-progress-label">
+                <span id="lessonLabel">Урок 1 · Задача 1 из 5</span>
+                <span id="lessonCounter">0/5</span>
+            </div>
+            <div class="lesson-bar"><div class="lesson-fill" id="lessonFill" style="width:0%;"></div></div>
+        </div>
+        <div class="problem-card">
+            <div class="problem-title" id="taskTypeLabel">Загрузка...</div>
+            <div class="problem-text" id="problemText">...</div>
+        </div>
+        <div id="scaffoldArea"></div>
+        <div class="ziti-dialog" id="zitiDialog">
+            <img src="./ziti.png" alt="Зити" id="zitiDialogAvatar" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'fb',innerText:'👨‍🏫'}))">
+            <div>
+                <strong>Зити:</strong>
+                <p id="zitiText">Внимательно прочитай задачу. Я рядом, если что!</p>
+            </div>
+        </div>
+        <div style="margin-top: 12px; text-align: center;">
+            <button class="btn btn-warning" id="dontKnowBtn" onclick="triggerDontKnow()">Не знаю 🤔</button>
+        </div>
+    </div>
+
+    <!-- ИГРОТЕКА -->
+    <div id="gamesTab" class="tab-content">
+        <h2 style="color: var(--primary-dark); margin-bottom: 8px;">🎮 Продолжи ряд</h2>
+        <p style="color: var(--text-light); margin-bottom: 10px;">Какая фигура должна быть следующей?</p>
+        <div class="pattern-row" id="patternRow"></div>
+        <div id="patternOptions" class="options-grid"></div>
+        <p id="patternFeedback" style="text-align: center; margin-top: 15px; font-weight: 700;"></p>
+    </div>
+
+    <!-- НАГРАДЫ -->
+    <div id="achTab" class="tab-content">
+        <h2 style="color: var(--primary-dark); margin-bottom: 8px;">🏆 Награды</h2>
+        <p style="color: var(--text-light); margin-bottom: 8px;" id="badgeProgress"></p>
+        <div class="badges-grid" id="badgesGrid"></div>
+    </div>
+
+    <!-- РОДИТЕЛЯМ -->
+    <div id="parentTab" class="tab-content">
+        <h2 style="color: var(--primary-dark); margin-bottom: 12px;">🔒 Родительский кабинет</h2>
+        <div id="parentAuth">
+            <p style="color: var(--text-light); margin-bottom: 12px;">Введите PIN-код</p>
+            <input type="password" id="pinInput" placeholder="PIN" inputmode="numeric">
+            <button class="btn" onclick="authParent()">Войти</button>
+        </div>
+        <div id="parentDashboard" style="display: none;">
+            <div style="background: #FFF0F6; padding: 14px; border-radius: 14px; margin-bottom: 14px;">
+                <h4 style="margin-bottom: 8px; color: var(--primary-dark);">📊 Успеваемость</h4>
+                <div class="stat-row"><span>Решено задач</span><strong id="statSolved">0</strong></div>
+                <div class="stat-row"><span>Подсказок использовано</span><strong id="statHints">0</strong></div>
+                <div class="stat-row"><span>Уроков пройдено</span><strong id="statLessons">0</strong></div>
+                <div class="stat-row"><span>Серия дней подряд</span><strong id="statDailyStreak">0</strong></div>
+            </div>
+            <h4 style="margin-bottom: 8px; color: var(--primary-dark);">📈 По методикам</h4>
+            <div id="statByType" style="background: #FFF0F6; padding: 14px; border-radius: 14px; margin-bottom: 14px;"></div>
+            <h4 style="margin-bottom: 8px; color: var(--primary-dark);">🕵️ Вовлечённость</h4>
+            <div id="statEngagement" style="background: #FFF0F6; padding: 14px; border-radius: 14px; margin-bottom: 14px;"></div>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn-secondary" onclick="exportReport()">📥 Скачать отчёт</button>
+                <button class="btn btn-warning" onclick="resetProgress()">🔄 Сбросить</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Онбординг -->
+<div id="onboarding" class="overlay hidden">
+    <div class="onboarding">
+        <img src="./maryashino.png" alt="Маряшино" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'fb',innerText:'👧'}))">
+        <h2>Привет! Я Маряшино</h2>
+        <p>Меня учит мой дядя Зити. Вместе мы решаем задачки, собираем сердечки 💖 и открываем награды.</p>
+        <p style="font-size: 13px;">Помни: Зити никогда не даст готовый ответ — он поможет тебе дойти до него самому!</p>
+        <button class="btn" onclick="startOnboarding()">Начать! 🚀</button>
+    </div>
+</div>
+
+<script>
+// ==================== КОНСТАНТЫ ====================
+const STORAGE_KEY = 'maryashino_final_v1';
+const LESSON_TOTAL = 5;
+
+const DEFAULT_STATE = {
+    hearts: 0,
+    level: 1,
+    solvedCount: 0,
+    hintsCount: 0,
+    lessonsCompleted: 0,
+    streak: 0,
+    mistakes: 0,
+    difficulty: 1,
+    currentTask: null,
+    lessonTask: 0,
+    dailyStreak: 0,
+    lastActiveDate: null,
+    soundOn: true,
+    unlockedBadges: [],
+    statsByType: {},
+    onboarded: false,
+    dontKnowOnTask: 0,
+    attemptsOnTask: 0,
+    taskStartedAt: 0,
+    engagement: { fastAnswers: 0, randomAnswers: 0, hintSpam: 0, nonsenseExplain: 0, suspiciousCorrect: 0 }
+};
+
+const TYPE_LABELS = {
+    subtraction: 'Вычитание',
+    addition: 'Сложение',
+    syllogism: 'Логический вывод',
+    'odd-one-out': 'Найди лишнее',
+    causality: 'Что сначала?'
+};
+
+const BADGES = [
+    { id: 'first', icon: '🌟', name: 'Первый шаг', check: s => s.solvedCount >= 1 },
+    { id: 'streak5', icon: '🔥', name: '5 подряд', check: s => s.streak >= 5 },
+    { id: 'lesson1', icon: '📚', name: 'Первый урок', check: s => s.lessonsCompleted >= 1 },
+    { id: 'hearts50', icon: '💖', name: '50 сердечек', check: s => s.hearts >= 50 },
+    { id: 'hearts100', icon: '💝', name: '100 сердечек', check: s => s.hearts >= 100 },
+    { id: 'daily3', icon: '📅', name: '3 дня подряд', check: s => s.dailyStreak >= 3 },
+    { id: 'logic', icon: '🧠', name: 'Логик', check: s => (s.statsByType.syllogism?.correct || 0) >= 3 },
+    { id: 'master', icon: '👑', name: 'Мастер', check: s => s.solvedCount >= 20 }
+];
+
+const PATTERNS = [
+    { seq: ['🔴', '🔵', '🔴', '🔵'], answer: '🔴', options: ['🔴', '🔵', '🟢'] },
+    { seq: ['⭐', '⭐', '🌙', '⭐', '⭐'], answer: '🌙', options: ['⭐', '🌙', '☀️'] },
+    { seq: ['🟩', '🟨', '🟩', '🟨', '🟩'], answer: '🟨', options: ['🟩', '🟨', '🟥'] },
+    { seq: ['🍎', '🍌', '🍎', '🍌', '🍎'], answer: '🍌', options: ['🍎', '🍌', '🍇'] },
+    { seq: ['💖', '💙', '💖', '💙'], answer: '💖', options: ['💖', '💙', '💚'] },
+    { seq: ['🌸', '🌷', '🌸', '🌷', '🌸'], answer: '🌷', options: ['🌸', '🌷', '🌻'] }
+];
+
+// ==================== ПУЛ ЗАДАЧ ====================
+const TASK_POOL = [
+    // Силлогизмы (10)
+    { id: 'syl-1', type: 'syllogism', difficulty: 1, text: 'Все фрукты полезны. Яблоко — фрукт. Что следует?', options: ['Яблоко полезно', 'Яблоко вкусное', 'Все яблоки красные'], answer: 'Яблоко полезно', guide: ['Прочитай первое предложение: что оно говорит обо всех фруктах?', 'Яблоко — это фрукт?', 'Если все фрукты полезны, а яблоко — фрукт, то что можно сказать о яблоке?', 'Подставь яблоко вместо слова "фрукт" в первом предложении.', 'Выбери вариант, который следует строго из правил, а не из твоих знаний.'], explanation: 'Если ВСЕ фрукты полезны, а яблоко — фрукт, значит, яблоко полезно. Это вывод по правилу.' },
+    { id: 'syl-2', type: 'syllogism', difficulty: 1, text: 'Все коты — животные. Мурка — кот. Что следует?', options: ['Мурка — животное', 'Мурка — собака', 'Мурка летает'], answer: 'Мурка — животное', guide: ['Что сказано обо всех котах?', 'Мурка — это кто?', 'Если все коты — животные, а Мурка — кот, что следует?', 'Подставь Мурку вместо слова "кот".', 'Выбери вариант, который логически следует.'], explanation: 'Все коты — животные. Мурка — кот. Значит, Мурка — животное.' },
+    { id: 'syl-3', type: 'syllogism', difficulty: 2, text: 'Все цветы нуждаются в воде. Ромашка — цветок. Что следует?', options: ['Ромашка нуждается в воде', 'Ромашка растёт в поле', 'Ромашка белая'], answer: 'Ромашка нуждается в воде', guide: ['Что общего у всех цветов?', 'Ромашка — цветок?', 'Значит, ромашке тоже нужно...?', 'Подставь ромашку вместо "цветок".', 'Какой вывод строго следует из правила?'], explanation: 'Все цветы нуждаются в воде. Ромашка — цветок. Следовательно, ромашка нуждается в воде.' },
+    { id: 'syl-4', type: 'syllogism', difficulty: 2, text: 'Все птицы имеют перья. Воробей — птица. Что следует?', options: ['Воробей имеет перья', 'Воробей летает', 'Воробей поёт'], answer: 'Воробей имеет перья', guide: ['Что сказано про всех птиц?', 'Воробей — птица?', 'Значит, у воробья есть...?', 'Подставь воробья вместо "птица".', 'Выбери то, что следует строго из условия.'], explanation: 'Все птицы имеют перья. Воробей — птица. Значит, воробей имеет перья.' },
+    { id: 'syl-5', type: 'syllogism', difficulty: 2, text: 'Все игрушки сделаны из материала. Кукла — игрушка. Что следует?', options: ['Кукла сделана из материала', 'Кукла красивая', 'Кукла мягкая'], answer: 'Кукла сделана из материала', guide: ['Что общего у всех игрушек?', 'Кукла — игрушка?', 'Значит, кукла тоже...?', 'Подставь куклу вместо "игрушка".', 'Какой вывод из правила?'], explanation: 'Все игрушки сделаны из материала. Кукла — игрушка. Значит, кукла сделана из материала.' },
+    { id: 'syl-6', type: 'syllogism', difficulty: 3, text: 'Все книги имеют страницы. Сказка — книга. Что следует?', options: ['У сказки есть страницы', 'Сказка интересная', 'Сказка тонкая'], answer: 'У сказки есть страницы', guide: ['Что есть у всех книг?', 'Сказка — это книга?', 'Значит, у сказки тоже есть...?', 'Подставь сказку вместо "книга".', 'Что следует строго по правилу?'], explanation: 'Все книги имеют страницы. Сказка — книга. Следовательно, у сказки есть страницы.' },
+    { id: 'syl-7', type: 'syllogism', difficulty: 3, text: 'Все сладкое любят дети. Торт сладкий. Что следует?', options: ['Торт любят дети', 'Торт большой', 'Торт дорогой'], answer: 'Торт любят дети', guide: ['Что любят дети?', 'Торт сладкий?', 'Значит, торт...?', 'Подставь торт вместо "сладкое".', 'Какой вывод следует?'], explanation: 'Все сладкое любят дети. Торт сладкий. Значит, торт любят дети.' },
+    { id: 'syl-8', type: 'syllogism', difficulty: 3, text: 'Все времена года имеют погоду. Лето — время года. Что следует?', options: ['У лета есть погода', 'Лето жаркое', 'Летом каникулы'], answer: 'У лета есть погода', guide: ['Что есть у всех времён года?', 'Лето — время года?', 'Значит, у лета тоже есть...?', 'Подставь лето вместо "время года".', 'Что следует из правила?'], explanation: 'Все времена года имеют погоду. Лето — время года. Значит, у лета есть погода.' },
+    { id: 'syl-9', type: 'syllogism', difficulty: 3, text: 'Все музыкальные инструменты издают звук. Скрипка — инструмент. Что следует?', options: ['Скрипка издает звук', 'Скрипка деревянная', 'Скрипка стоит дорого'], answer: 'Скрипка издает звук', guide: ['Что делают все музыкальные инструменты?', 'Скрипка — инструмент?', 'Значит, скрипка тоже...?', 'Подставь скрипку вместо "инструмент".', 'Какой вывод?'], explanation: 'Все музыкальные инструменты издают звук. Скрипка — инструмент. Следовательно, скрипка издаёт звук.' },
+    { id: 'syl-10', type: 'syllogism', difficulty: 3, text: 'Все насекомые имеют шесть лап. Муравей — насекомое. Что следует?', options: ['У муравья шесть лап', 'Муравей маленький', 'Муравей живёт в лесу'], answer: 'У муравья шесть лап', guide: ['Сколько лап у всех насекомых?', 'Муравей — насекомое?', 'Значит, у муравья...?', 'Подставь муравья вместо "насекомое".', 'Что следует?'], explanation: 'Все насекомые имеют шесть лап. Муравей — насекомое. Значит, у муравья шесть лап.' },
+
+    // Лишний предмет (10)
+    { id: 'odd-1', type: 'odd-one-out', difficulty: 1, text: 'Найди лишнее: яблоко, груша, морковь, банан', options: ['яблоко', 'груша', 'морковь', 'банан'], answer: 'морковь', guide: ['Назови все предметы. Что это?', 'Яблоко, груша, банан — это что?', 'Морковь — это фрукт или овощ?', 'Три предмета — фрукты. Какой не фрукт?', 'Выбери тот, что не подходит к остальным.'], explanation: 'Яблоко, груша и банан — фрукты. Морковь — овощ, поэтому она лишняя.' },
+    { id: 'odd-2', type: 'odd-one-out', difficulty: 1, text: 'Найди лишнее: кот, собака, волк, воробей', options: ['кот', 'собака', 'волк', 'воробей'], answer: 'воробей', guide: ['Кто из них умеет летать?', 'Кот, собака, волк — это кто?', 'Воробей — зверь или птица?', 'Три — звери. Кто не зверь?', 'Выбери лишнее.'], explanation: 'Кот, собака и волк — звери. Воробей — птица, поэтому он лишний.' },
+    { id: 'odd-3', type: 'odd-one-out', difficulty: 2, text: 'Найди лишнее: роза, ромашка, тюльпан, ёлка', options: ['роза', 'ромашка', 'тюльпан', 'ёлка'], answer: 'ёлка', guide: ['Что общего у розы, ромашки и тюльпана?', 'Это цветы?', 'Ёлка — это цветок?', 'Три — цветы. Что не цветок?', 'Выбери лишнее.'], explanation: 'Роза, ромашка и тюльпан — цветы. Ёлка — дерево, поэтому она лишняя.' },
+    { id: 'odd-4', type: 'odd-one-out', difficulty: 2, text: 'Найди лишнее: молоко, кефир, сок, сыр', options: ['молоко', 'кефир', 'сок', 'сыр'], answer: 'сок', guide: ['Что делают из молока?', 'Молоко, кефир, сыр — это что?', 'Сок делают из молока?', 'Три — молочные продукты. Что не молочное?', 'Выбери лишнее.'], explanation: 'Молоко, кефир и сыр — молочные продукты. Сок делают из фруктов, поэтому он лишний.' },
+    { id: 'odd-5', type: 'odd-one-out', difficulty: 2, text: 'Найди лишнее: мяч, кукла, машинка, книга', options: ['мяч', 'кукла', 'машинка', 'книга'], answer: 'книга', guide: ['Что делают с мячом, куклой и машинкой?', 'Это игрушки?', 'Книгу читают или играют с ней?', 'Три — игрушки. Что не игрушка?', 'Выбери лишнее.'], explanation: 'Мяч, кукла и машинка — игрушки. Книга — для чтения, поэтому она лишняя.' },
+    { id: 'odd-6', type: 'odd-one-out', difficulty: 3, text: 'Найди лишнее: зима, весна, лето, утро', options: ['зима', 'весна', 'лето', 'утро'], answer: 'утро', guide: ['Зима, весна, лето — это что?', 'Это времена года?', 'Утро — это время года?', 'Три — времена года. Что не время года?', 'Выбери лишнее.'], explanation: 'Зима, весна и лето — времена года. Утро — часть суток, поэтому оно лишнее.' },
+    { id: 'odd-7', type: 'odd-one-out', difficulty: 3, text: 'Найди лишнее: красный, синий, зелёный, круглый', options: ['красный', 'синий', 'зелёный', 'круглый'], answer: 'круглый', guide: ['Красный, синий, зелёный — это что?', 'Это цвета?', 'Круглый — это цвет?', 'Три — цвета. Что не цвет?', 'Выбери лишнее.'], explanation: 'Красный, синий и зелёный — цвета. Круглый — это форма, поэтому слово лишнее.' },
+    { id: 'odd-8', type: 'odd-one-out', difficulty: 3, text: 'Найди лишнее: врач, учитель, повар, молоток', options: ['врач', 'учитель', 'повар', 'молоток'], answer: 'молоток', guide: ['Врач, учитель, повар — это кто?', 'Это профессии?', 'Молоток — это профессия?', 'Три — профессии. Что не профессия?', 'Выбери лишнее.'], explanation: 'Врач, учитель и повар — профессии. Молоток — инструмент, поэтому он лишний.' },
+    { id: 'odd-9', type: 'odd-one-out', difficulty: 3, text: 'Найди лишнее: скрипка, пианино, гитара, кисть', options: ['скрипка', 'пианино', 'гитара', 'кисть'], answer: 'кисть', guide: ['Скрипка, пианино, гитара — это что?', 'Это музыкальные инструменты?', 'Кисть — музыкальный инструмент?', 'Три — инструменты. Что не инструмент?', 'Выбери лишнее.'], explanation: 'Скрипка, пианино и гитара — музыкальные инструменты. Кисть — для рисования, поэтому она лишняя.' },
+    { id: 'odd-10', type: 'odd-one-out', difficulty: 3, text: 'Найди лишнее: автобус, трамвай, самолёт, троллейбус', options: ['автобус', 'трамвай', 'самолёт', 'троллейбус'], answer: 'самолёт', guide: ['Где ездят автобус, трамвай и троллейбус?', 'Это наземный транспорт?', 'Самолёт летает по земле?', 'Три — наземный транспорт. Что не наземный?', 'Выбери лишнее.'], explanation: 'Автобус, трамвай и троллейбус — наземный транспорт. Самолёт летает по воздуху, поэтому он лишний.' },
+
+    // Последовательности (10)
+    { id: 'cau-1', type: 'causality', difficulty: 1, text: 'Что сначала, что потом: семечко, росток, цветок?', options: ['Семечко → росток → цветок', 'Цветок → росток → семечко', 'Росток → семечко → цветок'], answer: 'Семечко → росток → цветок', guide: ['Что появляется первым?', 'Что вырастает из семечка?', 'А что появляется из ростка?', 'Расставь по порядку роста.', 'Выбери правильную цепочку.'], explanation: 'Сначала сажают семечко, из него появляется росток, а из ростка вырастает цветок.' },
+    { id: 'cau-2', type: 'causality', difficulty: 1, text: 'Что сначала, что потом: яйцо, цыплёнок, курица?', options: ['Яйцо → цыплёнок → курица', 'Курица → яйцо → цыплёнок', 'Цыплёнок → курица → яйцо'], answer: 'Яйцо → цыплёнок → курица', guide: ['Кто появляется из яйца?', 'Кем становится цыплёнок?', 'Расставь по порядку.', 'Что было самым первым?', 'Выбери цепочку.'], explanation: 'Из яйца вылупляется цыплёнок, а он вырастает в курицу.' },
+    { id: 'cau-3', type: 'causality', difficulty: 2, text: 'Что сначала, что потом: тесто, мука, хлеб?', options: ['Мука → тесто → хлеб', 'Хлеб → мука → тесто', 'Тесто → хлеб → мука'], answer: 'Мука → тесто → хлеб', guide: ['Из чего делают тесто?', 'Что пекут из теста?', 'Что самое первое?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала берут муку, замешивают тесто, а из теста пекут хлеб.' },
+    { id: 'cau-4', type: 'causality', difficulty: 2, text: 'Что сначала, что потом: дождь, лужа, туча?', options: ['Туча → дождь → лужа', 'Лужа → туча → дождь', 'Дождь → туча → лужа'], answer: 'Туча → дождь → лужа', guide: ['Откуда идёт дождь?', 'Что появляется после дождя на земле?', 'Что самое первое?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала появляется туча, из неё идёт дождь, а после дождя образуется лужа.' },
+    { id: 'cau-5', type: 'causality', difficulty: 2, text: 'Что сначала, что потом: рисунок, краски, бумага?', options: ['Бумага → краски → рисунок', 'Рисунок → бумага → краски', 'Краски → рисунок → бумага'], answer: 'Бумага → краски → рисунок', guide: ['На чём рисуют?', 'Чем рисуют?', 'Что получается в итоге?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала берут бумагу, потом краски, и в итоге получается рисунок.' },
+    { id: 'cau-6', type: 'causality', difficulty: 3, text: 'Что сначала, что потом: письмо, конверт, почтовый ящик?', options: ['Письмо → конверт → почтовый ящик', 'Конверт → письмо → почтовый ящик', 'Почтовый ящик → письмо → конверт'], answer: 'Письмо → конверт → почтовый ящик', guide: ['Куда кладут письмо?', 'Куда опускают конверт?', 'Что самое первое?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала пишут письмо, кладут его в конверт, а конверт опускают в почтовый ящик.' },
+    { id: 'cau-7', type: 'causality', difficulty: 3, text: 'Что сначала, что потом: урожай, посадка, рост?', options: ['Посадка → рост → урожай', 'Урожай → посадка → рост', 'Рост → урожай → посадка'], answer: 'Посадка → рост → урожай', guide: ['Что делают первым делом?', 'Что происходит с растением потом?', 'Когда собирают урожай?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала сажают растение, оно растёт, и только потом собирают урожай.' },
+    { id: 'cau-8', type: 'causality', difficulty: 3, text: 'Что сначала, что потом: завтрак, подъём, школа?', options: ['Подъём → завтрак → школа', 'Школа → подъём → завтрак', 'Завтрак → школа → подъём'], answer: 'Подъём → завтрак → школа', guide: ['Что делают утром сначала?', 'Когда завтракают?', 'Когда идут в школу?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала просыпаются, потом завтракают, а затем идут в школу.' },
+    { id: 'cau-9', type: 'causality', difficulty: 3, text: 'Что сначала, что потом: чтение, закладка, книга?', options: ['Книга → закладка → чтение', 'Чтение → книга → закладка', 'Закладка → чтение → книга'], answer: 'Книга → закладка → чтение', guide: ['Что нужно, чтобы читать?', 'Чем отмечают место в книге?', 'Что делают с книгой и закладкой?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала берут книгу, кладут закладку, а потом читают.' },
+    { id: 'cau-10', type: 'causality', difficulty: 3, text: 'Что сначала, что потом: зарядка, пробуждение, душ?', options: ['Пробуждение → зарядка → душ', 'Душ → пробуждение → зарядка', 'Зарядка → душ → пробуждение'], answer: 'Пробуждение → зарядка → душ', guide: ['Что происходит первым утром?', 'Что делают после пробуждения?', 'Когда идут в душ?', 'Расставь по порядку.', 'Выбери цепочку.'], explanation: 'Сначала просыпаются, потом делают зарядку, а затем идут в душ.' }
+];
+
+// ==================== СОСТОЯНИЕ ====================
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
+        return { ...DEFAULT_STATE, ...JSON.parse(raw) };
+    } catch { return JSON.parse(JSON.stringify(DEFAULT_STATE)); }
+}
+function persist() { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {} }
+let state = loadState();
+
+function setState(patch) {
+    Object.assign(state, patch);
+    checkBadges();
+    persist();
+    updateUI();
+}
+
+function todayStr() { return new Date().toISOString().slice(0, 10); }
+
+function checkDailyStreak() {
+    const today = todayStr();
+    if (state.lastActiveDate === today) return;
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    state.dailyStreak = state.lastActiveDate === yesterday ? state.dailyStreak + 1 : 1;
+    state.lastActiveDate = today;
+}
+
+function checkBadges() {
+    BADGES.forEach(b => {
+        if (!state.unlockedBadges.includes(b.id) && b.check(state)) {
+            state.unlockedBadges.push(b.id);
+            setTimeout(() => showToast(`🏆 Награда: ${b.name}!`), 300);
+        }
+    });
+}
+
+// ==================== UI ====================
+function updateUI() {
+    document.getElementById('heartVal').innerText = state.hearts;
+    document.getElementById('levelVal').innerText = state.level;
+    document.getElementById('zitiLevel').innerText = state.level;
+    document.getElementById('zitiSolved').innerText = state.solvedCount;
+    document.getElementById('zitiLessons').innerText = state.lessonsCompleted;
+    document.getElementById('zitiHearts').innerText = state.hearts + ' 💖';
+    document.getElementById('zitiStreak').innerText = state.dailyStreak;
+    document.getElementById('soundBtn').innerText = state.soundOn ? '🔊' : '🔇';
+    document.getElementById('lessonCounter').innerText = `${state.lessonTask}/${LESSON_TOTAL}`;
+    document.getElementById('lessonFill').style.width = (state.lessonTask / LESSON_TOTAL * 100) + '%';
+    document.getElementById('lessonLabel').innerText = `Урок ${state.lessonsCompleted + 1} · Задача ${Math.min(state.lessonTask + 1, LESSON_TOTAL)} из ${LESSON_TOTAL}`;
+}
+
+function showToast(msg) {
+    const el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D36B9A,#F4A6C1);color:white;padding:12px 24px;border-radius:16px;font-weight:700;z-index:2000;box-shadow:0 6px 20px rgba(211,107,154,.4);font-size:14px;';
+    el.innerText = msg;
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2600);
+}
+
+function switchTab(id, btn) {
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    if (id === 'learnTab') { checkDailyStreak(); renderTask(); }
+    if (id === 'achTab') renderBadges();
+    if (id === 'gamesTab') startPatternGame();
+}
+
+// ==================== УПРАВЛЕНИЕ АНИМАЦИЕЙ ЗИТИ ====================
+function setZitiMood(mood) {
+    const avatars = document.querySelectorAll('#zitiCardAvatar, #zitiDialogAvatar');
+    avatars.forEach(img => {
+        if (!img || img.tagName !== 'IMG') return;
+        img.classList.remove('mood-happy', 'mood-think', 'mood-strict');
+        if (mood) {
+            img.classList.add('mood-' + mood);
+            if (mood === 'happy' || mood === 'strict') {
+                setTimeout(() => {
+                    img.classList.remove('mood-happy', 'mood-strict');
+                }, 3000);
+            }
+        }
+    });
+}
+
+// ==================== ЗАДАЧИ ====================
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+function generateArithmetic(type, difficulty) {
+    const ranges = { 1: [1, 10], 2: [10, 30], 3: [20, 100] };
+    const [min, max] = ranges[difficulty] || [1, 10];
+    let a = randInt(min, max);
+    let b = randInt(1, Math.max(2, Math.floor(a / 2)));
+
+    if (type === 'subtraction') {
+        return {
+            id: 'gen-sub-' + Date.now(),
+            type: 'subtraction', difficulty,
+            text: `У Маряшины было ${a} конфет. Она отдала ${b}. Сколько осталось?`,
+            answer: String(a - b),
+            guide: [
+                `Прочитай ещё раз: сколько конфет было сначала?`,
+                `Что Маряшина сделала с конфетами — отдала или получила?`,
+                `Если отдала — конфет стало больше или меньше? Какое действие подходит: + или −?`,
+                `Представь ${a} конфет. Мысленно зачеркни ${b} (те, что отдала). Посчитай, сколько осталось.`,
+                `Запиши выражение: ${a} − ${b}. Теперь посчитай сам.`
+            ],
+            explanation: `Маряшина отдала конфеты — их стало меньше. Мы вычитали: ${a} − ${b} = ${a - b}.`
+        };
+    } else {
+        return {
+            id: 'gen-add-' + Date.now(),
+            type: 'addition', difficulty,
+            text: `У Маряшины было ${a} наклеек. Ей подарили ещё ${b}. Сколько стало?`,
+            answer: String(a + b),
+            guide: [
+                `Прочитай ещё раз: сколько наклеек было сначала?`,
+                `Что произошло — подарили ещё или забрали?`,
+                `Если подарили — наклеек стало больше или меньше? Какое действие подходит: + или −?`,
+                `Представь ${a} наклеек и добавь ещё ${b}. Посчитай, сколько всего.`,
+                `Запиши выражение: ${a} + ${b}. Теперь посчитай сам.`
+            ],
+            explanation: `Маряшине подарили наклейки — их стало больше. Мы складывали: ${a} + ${b} = ${a + b}.`
+        };
+    }
+}
+
+function pickTask() {
+    if (Math.random() < 0.5) {
+        const type = Math.random() < 0.5 ? 'subtraction' : 'addition';
+        return generateArithmetic(type, state.difficulty);
+    }
+    let pool = TASK_POOL.filter(t => t.difficulty <= state.difficulty && t.id !== state.currentTask?.id);
+    if (pool.length === 0) pool = TASK_POOL.filter(t => t.id !== state.currentTask?.id);
+    return JSON.parse(JSON.stringify(pool[Math.floor(Math.random() * pool.length)]));
+}
+
+function renderTask() {
+    setZitiMood(null);
+    if (state.lessonTask >= LESSON_TOTAL) return renderLessonComplete();
+    const task = pickTask();
+    state.currentTask = task;
+    state.taskStartedAt = Date.now();
+    state.dontKnowOnTask = 0;
+    state.attemptsOnTask = 0;
+    persist();
+
+    document.getElementById('taskTypeLabel').innerText = `${TYPE_LABELS[task.type] || task.type} · Сложность ${task.difficulty}/3`;
+    document.getElementById('problemText').innerText = task.text;
+    document.getElementById('zitiText').innerText = 'Внимательно прочитай задачу. Подумай, какое действие здесь нужно.';
+    document.getElementById('dontKnowBtn').disabled = false;
+
+    const area = document.getElementById('scaffoldArea');
+    if (task.options) {
+        area.innerHTML = `<div class="scaffold-step"><div class="step-num">Выбери вариант</div><div class="options-grid" id="optionsGrid"></div></div>`;
+        const grid = document.getElementById('optionsGrid');
+        task.options.forEach(o => {
+            const b = document.createElement('button');
+            b.className = 'btn btn-secondary';
+            b.innerText = o;
+            b.onclick = () => handleResult(o === task.answer, task);
+            grid.appendChild(b);
+        });
+    } else {
+        area.innerHTML = `
+            <div class="scaffold-step">
+                <div class="step-num">Введи ответ</div>
+                <input type="text" id="finalAns" placeholder="Твой ответ" inputmode="numeric">
+                <button class="btn" onclick="submitInput()">Отправить</button>
+            </div>`;
+    }
+    updateUI();
+}
+
+function submitInput() {
+    const task = state.currentTask;
+    const val = document.getElementById('finalAns').value.trim();
+    const elapsed = Date.now() - state.taskStartedAt;
+
+    if (elapsed < 2000 && val !== task.answer) {
+        state.engagement.fastAnswers++;
+        persist();
+        setZitiMood('strict');
+        showToast('Не спеши! Прочитай задачу внимательно.');
+        return;
+    }
+    if (/^\d+$/.test(val)) {
+        const n = parseInt(val);
+        if (n > 500 || n < 0) {
+            state.engagement.randomAnswers++;
+            persist();
+            setZitiMood('strict');
+            document.getElementById('zitiText').innerText = 'Проверь: такое число могло получиться? Вернись к условию.';
+            return;
+        }
+    }
+    state.attemptsOnTask++;
+    handleResult(val === task.answer, task);
+}
+
+function trackStat(type, correct) {
+    if (!state.statsByType[type]) state.statsByType[type] = { correct: 0, total: 0 };
+    state.statsByType[type].total++;
+    if (correct) state.statsByType[type].correct++;
+}
+
+function handleResult(isCorrect, task) {
+    trackStat(task.type, isCorrect);
+
+    if (isCorrect) {
+        const hintsUsed = state.dontKnowOnTask;
+        let reward = 10 + task.difficulty * 5;
+        let praise = 'Отлично! Ты решил сам!';
+
+        if (hintsUsed >= 3) { reward = Math.round(reward * 0.25); praise = 'Правильно! Ты дошёл до ответа с моей помощью — это тоже важно.'; }
+        else if (hintsUsed >= 1) { reward = Math.round(reward * 0.5); praise = 'Верно! Ты справился с небольшой подсказкой.'; }
+
+        if (hintsUsed === 0) state.streak++;
+        if (state.streak >= 3 && state.difficulty < 3) { state.difficulty++; state.streak = 0; }
+        state.solvedCount++;
+        state.mistakes = 0;
+
+        if (state.mistakes >= 3 && Date.now() - state.taskStartedAt < 3000) {
+            state.engagement.suspiciousCorrect++;
+        }
+
+        setState({ hearts: state.hearts + reward, lessonTask: state.lessonTask + 1 });
+        playSound('happy');
+        fireConfetti();
+        setZitiMood('happy');
+        document.getElementById('zitiText').innerText = `${praise} +${reward} 💖\n\n${task.explanation}`;
+        document.getElementById('scaffoldArea').innerHTML = `
+            <div class="scaffold-step" style="text-align:center; border-color: var(--success);">
+                <p style="font-weight:700; color: var(--success); margin-bottom:10px;">✓ Верно!</p>
+                <button class="btn" onclick="renderTask()">Дальше →</button>
+            </div>`;
+        document.getElementById('dontKnowBtn').disabled = true;
+    } else {
+        state.streak = 0;
+        state.mistakes++;
+        if (state.mistakes >= 2 && state.difficulty > 1) { state.difficulty--; state.mistakes = 0; }
+        persist();
+        playSound('sad');
+        document.getElementById('zitiText').innerText = 'Почти! Давай разберёмся вместе.';
+        triggerDontKnow();
+    }
+}
+
+function renderLessonComplete() {
+    const bonus = 20;
+    setState({ hearts: state.hearts + bonus, lessonsCompleted: state.lessonsCompleted + 1, lessonTask: 0 });
+    fireConfetti();
+    playSound('happy');
+    setZitiMood('happy');
+    document.getElementById('scaffoldArea').innerHTML = `
+        <div class="scaffold-step" style="text-align:center; border-color: var(--success);">
+            <h3 style="color: var(--success); margin-bottom: 10px;">🎉 Урок пройден!</h3>
+            <p style="margin-bottom: 15px;">Бонус: +${bonus} 💖</p>
+            <button class="btn" onclick="renderTask()">Новый урок</button>
+        </div>`;
+    document.getElementById('problemText').innerText = 'Отличная работа! Ты справился с уроком.';
+    document.getElementById('taskTypeLabel').innerText = 'Урок завершён';
+    document.getElementById('zitiText').innerText = 'Я горжусь тобой, племяшка! Отдохни немного и продолжим.';
+}
+
+// ==================== ПОДСКАЗКИ ====================
+function triggerDontKnow() {
+    const task = state.currentTask;
+    if (!task) return;
+
+    if (state.dontKnowOnTask >= 2 && state.attemptsOnTask === 0) {
+        state.engagement.hintSpam++;
+        persist();
+        setZitiMood('strict');
+        document.getElementById('zitiText').innerText = 'Давай по-честному: сначала попробуй сам. Даже ошибка — это шаг вперёд! Я подожду.';
+        return;
+    }
+
+    const idx = Math.min(state.dontKnowOnTask, task.guide.length - 1);
+    const hint = task.guide[idx];
+
+    setState({ dontKnowOnTask: state.dontKnowOnTask + 1, hintsCount: state.hintsCount + 1 });
+    setZitiMood('think');
+    document.getElementById('zitiText').innerText = hint;
+
+    if (idx === task.guide.length - 1 && !document.getElementById('finalAns') && !task.options) {
+        document.getElementById('scaffoldArea').innerHTML = `
+            <div class="scaffold-step">
+                <div class="step-num">Введи ответ</div>
+                <input type="text" id="finalAns" placeholder="Твой ответ" inputmode="numeric">
+                <button class="btn" onclick="submitInput()">Отправить</button>
+            </div>`;
+    }
+}
+
+// ==================== ИГРОТЕКА ====================
+let currentPattern = null;
+function startPatternGame() {
+    currentPattern = PATTERNS[Math.floor(Math.random() * PATTERNS.length)];
+    document.getElementById('patternRow').innerHTML = currentPattern.seq.map(s => `<span>${s}</span>`).join('') + '<span style="color:var(--primary);">?</span>';
+    const opts = document.getElementById('patternOptions');
+    opts.innerHTML = '';
+    currentPattern.options.forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'btn btn-secondary';
+        b.innerText = o;
+        b.style.fontSize = '30px';
+        b.onclick = () => checkPattern(o);
+        opts.appendChild(b);
+    });
+    document.getElementById('patternFeedback').innerText = '';
+}
+
+function checkPattern(choice) {
+    const fb = document.getElementById('patternFeedback');
+    if (choice === currentPattern.answer) {
+        setState({ hearts: state.hearts + 2 });
+        fb.innerText = 'Верно! +2 💖';
+        fb.style.color = 'var(--success)';
+        playSound('happy');
+        fireConfetti();
+        setTimeout(startPatternGame, 1200);
+    } else {
+        fb.innerText = 'Подумай ещё!';
+        fb.style.color = 'var(--warning)';
+        playSound('sad');
+    }
+}
+
+// ==================== НАГРАДЫ ====================
+function renderBadges() {
+    const grid = document.getElementById('badgesGrid');
+    grid.innerHTML = '';
+    BADGES.forEach(b => {
+        const unlocked = state.unlockedBadges.includes(b.id);
+        const div = document.createElement('div');
+        div.className = 'badge' + (unlocked ? ' unlocked' : '');
+        div.innerHTML = `<div class="badge-icon">${b.icon}</div><div class="badge-name">${b.name}</div>`;
+        grid.appendChild(div);
+    });
+    document.getElementById('badgeProgress').innerText = `Открыто ${state.unlockedBadges.length} из ${BADGES.length}`;
+}
+
+// ==================== РОДИТЕЛЯМ ====================
+function authParent() {
+    if (document.getElementById('pinInput').value === '1234') {
+        document.getElementById('parentAuth').style.display = 'none';
+        document.getElementById('parentDashboard').style.display = 'block';
+        renderParentDashboard();
+    } else showToast('Неверный PIN!');
+}
+
+function renderParentDashboard() {
+    document.getElementById('statSolved').innerText = state.solvedCount;
+    document.getElementById('statHints').innerText = state.hintsCount;
+    document.getElementById('statLessons').innerText = state.lessonsCompleted;
+    document.getElementById('statDailyStreak').innerText = state.dailyStreak;
+
+    const box = document.getElementById('statByType');
+    const entries = Object.entries(state.statsByType);
+    if (entries.length === 0) {
+        box.innerHTML = '<p style="color:var(--text-light); font-size:14px;">Пока нет данных</p>';
+    } else {
+        box.innerHTML = entries.map(([type, s]) => {
+            const pct = s.total ? Math.round(s.correct / s.total * 100) : 0;
+            return `<div class="stat-row"><span>${TYPE_LABELS[type] || type}</span><strong>${s.correct}/${s.total} (${pct}%)</strong></div>`;
+        }).join('');
+    }
+
+    const e = state.engagement;
+    document.getElementById('statEngagement').innerHTML = `
+        <div class="stat-row"><span>Быстрых ответов</span><strong>${e.fastAnswers}</strong></div>
+        <div class="stat-row"><span>Случайных чисел</span><strong>${e.randomAnswers}</strong></div>
+        <div class="stat-row"><span>Спам «Не знаю»</span><strong>${e.hintSpam}</strong></div>
+        <div class="stat-row"><span>Подозрительно верных</span><strong>${e.suspiciousCorrect}</strong></div>
+    `;
+}
+
+function exportReport() {
+    const report = { date: new Date().toISOString(), child: 'Маряшина', ...state };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `maryashino-report-${todayStr()}.json`;
+    a.click();
+}
+
+function resetProgress() {
+    if (!confirm('Сбросить весь прогресс? Это действие необратимо.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    location.reload();
+}
+
+// ==================== ЗВУК ====================
+let audioCtx = null;
+function playSound(type) {
+    if (!state.soundOn) return;
+    try {
+        audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        const now = audioCtx.currentTime;
+        if (type === 'happy') {
+            osc.frequency.setValueAtTime(523, now);
+            osc.frequency.setValueAtTime(659, now + 0.1);
+            osc.frequency.setValueAtTime(784, now + 0.2);
+        } else {
+            osc.frequency.setValueAtTime(330, now);
+            osc.frequency.setValueAtTime(262, now + 0.15);
+        }
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now); osc.stop(now + 0.35);
+    } catch {}
+}
+function toggleSound() { setState({ soundOn: !state.soundOn }); }
+
+// ==================== КОНФЕТТИ ====================
+function fireConfetti() {
+    const colors = ['#FF6B9D', '#D36B9A', '#F4A6C1', '#FFD0E5', '#A44B74'];
+    for (let i = 0; i < 25; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti';
+        el.style.left = Math.random() * 100 + 'vw';
+        el.style.background = colors[i % colors.length];
+        el.style.animationDelay = (Math.random() * 0.3) + 's';
+        document.body.appendChild(el);
+        setTimeout(() => el.remove(), 2000);
+    }
+}
+
+// ==================== ОНБОРДИНГ ====================
+function startOnboarding() {
+    setState({ onboarded: true });
+    document.getElementById('onboarding').classList.add('hidden');
+    renderTask();
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+updateUI();
+checkDailyStreak();
+persist();
+if (!state.onboarded) {
+    document.getElementById('onboarding').classList.remove('hidden');
+} else {
+    renderTask();
+}
+</script>
+</body>
+</html>

@@ -3,486 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Зити — Детский Тренажер</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Confetti -->
+    <title>Маряшино — Уроки с Зити</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { brandPink: '#D36B9A', brandBg: '#FFF0F5' },
-                    fontFamily: { sans: ['Comic Sans MS', 'Segoe UI', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
-        body {
-            font-family: 'Comic Sans MS', 'Fredoka', sans-serif;
-            background-color: #FFF0F5;
-            background-image: radial-gradient(#F4A6C1 1px, transparent 1px);
-            background-size: 24px 24px;
-            user-select: none;
-            overflow-x: hidden;
+        :root {
+            --primary: #D36B9A; --primary-light: #F4A6C1; --bg: #FFF0F5;
+            --card: #FFFFFF; --text: #4A2C3A; --text-light: #8A6373;
+            --heart: #FF6B9D; --success: #7BC89C; --warning: #F0A080;
+            --border: #F5D6E0; --shadow: rgba(211,107,154,.15);
         }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 2px solid rgba(244, 166, 193, 0.5);
-            box-shadow: 0 8px 20px -5px rgba(211, 107, 154, 0.2);
-        }
-        .btn-bubble {
-            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            box-shadow: 0 4px 0px rgba(0,0,0,0.15);
-        }
-        .btn-bubble:active { transform: translateY(2px) scale(0.98); box-shadow: 0 1px 0px rgba(0,0,0,0.2); }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', 'Comic Sans MS', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); background-image: radial-gradient(#F4A6C1 1px, transparent 1px); background-size: 24px 24px; color: var(--text); min-height: 100vh; padding-bottom: 90px; overflow-x: hidden; }
         
-        .tab-content { display: none; animation: fadeIn 0.3s ease-out forwards; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        header { position: sticky; top: 0; z-index: 40; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); border-bottom: 2px solid var(--border); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; }
+        .logo { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 18px; color: var(--primary); }
+        .stats { display: flex; gap: 8px; align-items: center; font-weight: bold; font-size: 14px; }
+        .badge { background: #FFF0F6; border: 2px solid var(--primary-light); padding: 4px 10px; border-radius: 20px; display: flex; align-items: center; gap: 4px; }
 
-        /* ПИТОМЕЦ */
+        .container { max-width: 800px; margin: 20px auto; padding: 0 16px; }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 8px 20px var(--shadow); border: 2px solid var(--border); margin-bottom: 20px; }
+        
+        .btn { background: linear-gradient(135deg, var(--primary), var(--primary-light)); color: white; border: none; padding: 14px 20px; border-radius: 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.1s; width: 100%; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,0.1); }
+        .btn-secondary { background: #FFF0F6; color: var(--primary); border: 2px solid var(--primary-light); box-shadow: 0 4px 0 var(--primary-light); }
+        .btn-warning { background: var(--warning); }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .bar-bg { background: #EDF2F7; height: 12px; border-radius: 8px; overflow: hidden; margin-top: 4px;}
+        .bar-fill { height: 100%; transition: width 0.3s; border-radius: 8px; }
+        .fill-hunger { background: #FFB347; }
+        .fill-mood { background: var(--heart); }
+        .fill-energy { background: #4FACFE; }
+        .stat-label { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; color: var(--text-light); margin-bottom: 4px; }
+
+        #game-area { position: relative; height: 300px; background: #E0F7FA; border-radius: 20px; overflow: hidden; display: none; touch-action: none; border: 2px dashed var(--primary-light); }
+        #basket { position: absolute; bottom: 0; font-size: 40px; transition: left 0.1s; transform: translateX(-50%); }
+        .apple { position: absolute; font-size: 30px; }
+
+        nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border-top: 2px solid var(--border); display: flex; justify-content: space-around; padding: 8px; z-index: 50; }
+        .nav-btn { background: none; border: none; display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: bold; color: var(--text-light); cursor: pointer; padding: 8px; border-radius: 12px; transition: 0.2s; }
+        .nav-btn.active { color: var(--primary); background: #FFF0F6; }
+        .nav-btn span { font-size: 20px; margin-bottom: 2px; }
+
         #pet-container {
             position: fixed; bottom: 80px; left: 50px;
-            width: 160px; height: 200px; z-index: 40;
-            pointer-events: none; transition: opacity 0.35s ease;
+            width: 140px; height: 180px; z-index: 40;
+            pointer-events: none; transition: opacity 0.35s, transform 0.1s;
             filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
             transform-origin: bottom center;
         }
-        body.hover-control #pet-container { opacity: 0.15 !important; }
+        body.hover-ui #pet-container { opacity: 0.15 !important; }
         #pet-svg-wrapper svg { width: 100%; height: 100%; overflow: visible; }
-
-        /* Анимация суставов */
-        .rig-seg { transition: transform 0.1s linear; }
         
-        /* Zzz */
-        @keyframes zzzFloat {
-            0% { opacity: 0; transform: translate(0, 0) scale(0.5); }
-            50% { opacity: 1; }
-            100% { opacity: 0; transform: translate(30px, -60px) scale(1.2); }
-        }
-        .zzz-particle { position: absolute; font-weight: bold; color: #8B5CF6; animation: zzzFloat 2.5s infinite; pointer-events: none; }
+        .zzz { position: absolute; top: -20px; right: 0; font-size: 24px; font-weight: bold; color: #4FACFE; animation: floatZ 2s infinite; display: none; }
+        @keyframes floatZ { 0% { opacity: 0; transform: translateY(0); } 50% { opacity: 1; } 100% { opacity: 0; transform: translateY(-20px); } }
     </style>
 </head>
-<body class="min-h-screen text-gray-800 pb-28">
+<body>
 
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-pink-200 shadow-sm px-4 py-3">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <div class="w-10 h-10 rounded-full bg-pink-100 border-2 border-pink-400 flex items-center justify-center text-xl shadow-inner">🐱</div>
-                <h1 class="text-xl font-bold text-pink-600">Маряшино</h1>
-            </div>
-            <div class="flex items-center space-x-2">
-                <div class="bg-pink-100 border-2 border-pink-300 text-pink-700 text-sm font-bold px-3 py-1 rounded-full flex items-center space-x-1 shadow-sm">
-                    <span>💖</span><span id="hearts-count">50</span>
-                </div>
-            </div>
+<header>
+    <div class="logo">🐾 Маряшино</div>
+    <div class="stats">
+        <div class="badge">💖 <span id="hearts">50</span></div>
+    </div>
+</header>
+
+<div class="container">
+    <div id="tab-ziti" class="tab-content active">
+        <div class="card" style="text-align: center;">
+            <h2 style="color: var(--primary); margin-bottom: 10px;">Привет, я Зити! 👋</h2>
+            <p style="color: var(--text-light); font-size: 15px; margin-bottom: 20px;">Твой питомец гуляет по экрану. Решай задачи, чтобы заработать сердечки и покупать ему вкусности!</p>
+            <button class="btn" onclick="switchTab('lessons')">Начать урок 🚀</button>
         </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto p-4 md:p-6">
-        <!-- TAB 1: ЗИТИ -->
-        <section id="tab-ziti" class="tab-content active space-y-6">
-            <div class="glass-card rounded-3xl p-6 md:p-8 text-center relative overflow-hidden border-2 border-pink-300">
-                <h2 class="text-3xl font-extrabold text-pink-700 mb-2">Привет, я Зити! 👋</h2>
-                <p class="text-gray-600 mb-6">Твой умный питомец. Я гуляю по экрану, а ты решай задачки, чтобы заработать мне на вкусности!</p>
-                <button onclick="switchTab('lessons')" class="btn-bubble bg-pink-500 hover:bg-pink-600 text-white font-bold px-8 py-3.5 rounded-2xl text-lg">
-                    🚀 Начать урок
-                </button>
-            </div>
-        </section>
-
-        <!-- TAB 2: УРОКИ -->
-        <section id="tab-lessons" class="tab-content space-y-6">
-            <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-pink-200">
-                <div class="flex justify-between items-center mb-4 pb-4 border-b border-pink-100">
-                    <h2 id="lesson-title" class="text-xl font-bold text-gray-800">Задача 1 из 5</h2>
-                    <div class="w-32 bg-gray-200 rounded-full h-3 overflow-hidden">
-                        <div id="lesson-progress-bar" class="bg-pink-500 h-full w-0 transition-all"></div>
-                    </div>
-                </div>
-                <div class="bg-pink-50 p-6 rounded-2xl border border-pink-200 text-center mb-6">
-                    <span id="question-category" class="text-xs bg-white text-pink-600 px-3 py-1 rounded-full font-bold shadow-sm">Категория</span>
-                    <p id="question-text" class="text-lg font-semibold text-gray-800 mt-2">Загрузка...</p>
-                </div>
-                <div id="options-container" class="grid grid-cols-1 gap-3"></div>
-                <div id="feedback-box" class="hidden mt-4 p-4 rounded-xl text-center font-bold"></div>
-            </div>
-        </section>
-
-        <!-- TAB 3: ИГРА -->
-        <section id="tab-game" class="tab-content space-y-6">
-            <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-pink-200 text-center">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">🍎 Лови Яблочки</h2>
-                <p class="text-xs text-gray-500 mb-4">Стоимость игры: 15⚡ Энергии. Поймай 10 яблок для +5 💖!</p>
-                <div class="flex justify-between items-center mb-4">
-                    <span class="bg-pink-100 text-pink-700 font-bold px-3 py-1 rounded-full text-sm">Счёт: <span id="game-score">0</span> / 10</span>
-                    <button onclick="startGame()" class="btn-bubble bg-green-500 hover:bg-green-600 text-white font-bold px-4 py-2 rounded-xl text-sm">Старт ▶</button>
-                </div>
-                <div id="game-container" class="relative w-full h-[300px] bg-blue-100 rounded-2xl border-2 border-pink-300 overflow-hidden touch-none">
-                    <canvas id="gameCanvas" class="w-full h-full block"></canvas>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 4: ПИТОМЕЦ -->
-        <section id="tab-pet" class="tab-content space-y-6">
-            <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-pink-200">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">🐾 Забота о Зити</h2>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                    <div class="bg-white p-4 rounded-2xl border border-pink-100 shadow-sm">
-                        <div class="flex justify-between text-sm font-bold text-gray-700 mb-1"><span>🍎 Сытость</span><span id="stat-hunger-val">100%</span></div>
-                        <div class="w-full bg-gray-100 rounded-full h-3"><div id="bar-hunger" class="bg-red-400 h-full w-full rounded-full transition-all"></div></div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-pink-100 shadow-sm">
-                        <div class="flex justify-between text-sm font-bold text-gray-700 mb-1"><span>⚽ Настроение</span><span id="stat-mood-val">100%</span></div>
-                        <div class="w-full bg-gray-100 rounded-full h-3"><div id="bar-mood" class="bg-yellow-400 h-full w-full rounded-full transition-all"></div></div>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-pink-100 shadow-sm">
-                        <div class="flex justify-between text-sm font-bold text-gray-700 mb-1"><span>⚡ Энергия</span><span id="stat-energy-val">100%</span></div>
-                        <div class="w-full bg-gray-100 rounded-full h-3"><div id="bar-energy" class="bg-blue-400 h-full w-full rounded-full transition-all"></div></div>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <button onclick="feedPet()" class="btn-bubble bg-pink-100 text-pink-700 border border-pink-300 p-3 rounded-2xl font-bold flex flex-col items-center">🍎<span class="text-sm mt-1">Покормить</span></button>
-                    <button onclick="playWithPet()" class="btn-bubble bg-yellow-100 text-yellow-800 border border-yellow-300 p-3 rounded-2xl font-bold flex flex-col items-center">⚽<span class="text-sm mt-1">Поиграть</span></button>
-                    <button onclick="callPetCenter()" class="btn-bubble bg-purple-100 text-purple-700 border border-purple-300 p-3 rounded-2xl font-bold flex flex-col items-center">📢<span class="text-sm mt-1">Позвать</span></button>
-                    <button onclick="freezePet()" id="btn-freeze" class="btn-bubble bg-blue-100 text-blue-700 border border-blue-300 p-3 rounded-2xl font-bold flex flex-col items-center">🛑<span class="text-sm mt-1">Не отвлекай</span></button>
-                    <button onclick="toggleSleepPet()" id="btn-sleep" class="btn-bubble bg-indigo-100 text-indigo-700 border border-indigo-300 p-3 rounded-2xl font-bold flex flex-col items-center col-span-2 sm:col-span-1">🌙<span class="text-sm mt-1">Спать</span></button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TAB 5: РОДИТЕЛЯМ -->
-        <section id="tab-parents" class="tab-content space-y-6">
-            <div class="glass-card rounded-3xl p-6 md:p-8 border-2 border-pink-200 max-w-xl mx-auto text-center">
-                <div id="parent-pin-container" class="space-y-4 py-6">
-                    <span class="text-4xl">🔒</span>
-                    <h2 class="text-xl font-bold">Родителям</h2>
-                    <input type="password" id="pin-input" placeholder="PIN (1234)" class="w-32 text-center text-xl font-bold py-2 rounded-xl border-2 border-pink-300">
-                    <button onclick="verifyParentPin()" class="btn-bubble bg-pink-500 text-white font-bold px-6 py-2 rounded-xl">Войти</button>
-                </div>
-                <div id="parent-dashboard" class="hidden space-y-4">
-                    <h2 class="text-xl font-bold">📊 Успехи</h2>
-                    <div class="bg-pink-50 p-4 rounded-xl"><p class="text-2xl font-bold text-pink-600" id="stat-solved-tasks">0</p><p class="text-xs">Задач решено</p></div>
-                    <button onclick="lockParentPortal()" class="text-xs text-gray-500 underline">Выйти</button>
-                    <button onclick="resetAppProgress()" class="btn-bubble bg-red-500 text-white text-xs px-4 py-2 rounded-xl w-full mt-4">Сбросить прогресс</button>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/90 border-t-2 border-pink-200 px-2 py-2 shadow-lg">
-        <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
-            <button onclick="switchTab('ziti')" id="nav-ziti" class="nav-btn flex flex-col items-center p-2 rounded-xl text-pink-600 font-bold bg-pink-100"><span class="text-xl">🐱</span><span class="text-[10px]">Зити</span></button>
-            <button onclick="switchTab('lessons')" id="nav-lessons" class="nav-btn flex flex-col items-center p-2 rounded-xl text-gray-500 hover:bg-pink-50"><span class="text-xl">📖</span><span class="text-[10px]">Уроки</span></button>
-            <button onclick="switchTab('game')" id="nav-game" class="nav-btn flex flex-col items-center p-2 rounded-xl text-gray-500 hover:bg-pink-50"><span class="text-xl">🎮</span><span class="text-[10px]">Игры</span></button>
-            <button onclick="switchTab('pet')" id="nav-pet" class="nav-btn flex flex-col items-center p-2 rounded-xl text-gray-500 hover:bg-pink-50"><span class="text-xl">🐾</span><span class="text-[10px]">Питомец</span></button>
-            <button onclick="switchTab('parents')" id="nav-parents" class="nav-btn flex flex-col items-center p-2 rounded-xl text-gray-500 hover:bg-pink-50"><span class="text-xl">🔒</span><span class="text-[10px]">Родителям</span></button>
-        </div>
-    </nav>
-
-    <!-- ПИТОМЕЦ НА ФОНЕ -->
-    <div id="pet-container">
-        <div id="zzz-container" class="absolute -top-6 right-2 hidden">
-            <span class="zzz-particle text-lg">z</span>
-            <span class="zzz-particle text-xl" style="animation-delay: 0.8s;">Z</span>
-        </div>
-        <div id="pet-svg-wrapper" class="w-full h-full transform origin-bottom"></div>
     </div>
 
-    <script>
-        // --- СОСТОЯНИЕ ---
-        let appData = { hearts: 50, level: 1, solvedTasks: 0, hunger: 100, mood: 100, energy: 100 };
-        let manifest = null;
-        let petState = 'idle'; 
-        let petX = 50;
-        let dir = 1;
-        let animTime = 0;
+    <div id="tab-lessons" class="tab-content">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; font-size: 14px; color: var(--primary);">
+                <span id="task-type">Загрузка...</span>
+                <span id="task-progress">1/5</span>
+            </div>
+            <div class="bar-bg" style="margin-bottom: 20px;"><div class="bar-fill fill-mood" id="lesson-bar" style="width: 0%;"></div></div>
+            <div style="background: #FFF0F6; padding: 20px; border-radius: 16px; text-align: center; margin-bottom: 20px;">
+                <p id="task-q" style="font-size: 18px; font-weight: bold;">Загрузка задачи...</p>
+            </div>
+            <div id="answer-area"></div>
+            <p id="ziti-hint" style="text-align: center; font-size: 14px; color: var(--text-light); margin-top: 15px; font-style: italic;"></p>
+        </div>
+    </div>
 
-        // --- UI ---
-        function updateUI() {
-            document.getElementById('hearts-count').innerText = appData.hearts;
-            document.getElementById('stat-solved-tasks').innerText = appData.solvedTasks;
+    <div id="tab-games" class="tab-content">
+        <div class="card">
+            <h2 style="color: var(--primary); margin-bottom: 10px; text-align: center;">🍎 Поймай яблочко</h2>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 10px;">
+                <span>Счёт: <span id="score">0</span>/10</span>
+                <button class="btn btn-secondary" style="width: auto; padding: 6px 15px;" onclick="startGame()">Играть</button>
+            </div>
+            <div id="game-area"><div id="basket">🧺</div></div>
+        </div>
+    </div>
+
+    <div id="tab-pet" class="tab-content">
+        <div class="card">
+            <h2 style="color: var(--primary); margin-bottom: 20px; text-align: center;">🐾 Мой друг</h2>
+            <div class="stat-label"><span>Сытость 🍎</span><span id="val-hunger">100%</span></div>
+            <div class="bar-bg"><div class="bar-fill fill-hunger" id="bar-hunger" style="width:100%"></div></div>
+            <div class="stat-label" style="margin-top: 10px;"><span>Настроение ⚽</span><span id="val-mood">100%</span></div>
+            <div class="bar-bg"><div class="bar-fill fill-mood" id="bar-mood" style="width:100%"></div></div>
+            <div class="stat-label" style="margin-top: 10px;"><span>Энергия ⚡</span><span id="val-energy">100%</span></div>
+            <div class="bar-bg"><div class="bar-fill fill-energy" id="bar-energy" style="width:100%"></div></div>
+            <div class="grid-2" style="margin-top: 20px;">
+                <button class="btn" onclick="feedPet()">Покормить</button>
+                <button class="btn btn-secondary" onclick="playPet()">Поиграть</button>
+                <button class="btn btn-secondary" onclick="callPet()">Позвать</button>
+                <button class="btn btn-secondary" onclick="freezePet()" id="btn-freeze">Не отвлекай</button>
+                <button class="btn btn-warning" style="grid-column: span 2;" onclick="sleepPet()" id="btn-sleep">Уложить спать 😴</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-parents" class="tab-content">
+        <div class="card" style="text-align: center;">
+            <h2 style="margin-bottom: 15px;">🔒 Родителям</h2>
+            <input type="password" id="pin" placeholder="PIN (1234)" style="width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--border); margin-bottom: 15px; text-align: center; font-size: 18px;">
+            <button class="btn" onclick="authParent()">Войти</button>
+            <div id="parent-stats" style="display: none; margin-top: 20px; text-align: left;">
+                <p><strong>Решено задач:</strong> <span id="stat-solved">0</span></p>
+                <button class="btn btn-warning" style="margin-top: 20px;" onclick="resetProgress()">Сбросить прогресс</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<nav>
+    <button class="nav-btn active" onclick="switchTab('ziti')" id="nav-ziti"><span>🐱</span>Зити</button>
+    <button class="nav-btn" onclick="switchTab('lessons')" id="nav-lessons"><span>📖</span>Уроки</button>
+    <button class="nav-btn" onclick="switchTab('games')" id="nav-games"><span>🎮</span>Игры</button>
+    <button class="nav-btn" onclick="switchTab('pet')" id="nav-pet"><span>🐾</span>Питомец</button>
+    <button class="nav-btn" onclick="switchTab('parents')" id="nav-parents"><span>🔒</span>Родителям</button>
+</nav>
+
+<div id="pet-container">
+    <div class="zzz" id="zzz-text">Zzz</div>
+    <div id="pet-svg-wrapper"></div>
+</div><script>
+// --- СОСТОЯНИЕ ---
+let state = {
+    hearts: 50, solved: 0, lessonTask: 0,
+    pet: { hunger: 100, mood: 100, energy: 100, isSleeping: false, ignore: false, mouth: null }
+};
+let manifest = null;
+let petX = 50, dir = 1, petState = 'idle', animTime = 0;
+
+// --- UI И НАВИГАЦИЯ ---
+function updateUI() {
+    document.getElementById('hearts').innerText = state.hearts;
+    document.getElementById('val-hunger').innerText = Math.round(state.pet.hunger) + '%';
+    document.getElementById('bar-hunger').style.width = state.pet.hunger + '%';
+    document.getElementById('val-mood').innerText = Math.round(state.pet.mood) + '%';
+    document.getElementById('bar-mood').style.width = state.pet.mood + '%';
+    document.getElementById('val-energy').innerText = Math.round(state.pet.energy) + '%';
+    document.getElementById('bar-energy').style.width = state.pet.energy + '%';
+
+    document.getElementById('btn-freeze').innerText = state.pet.ignore ? 'Можно играть' : 'Не отвлекай';
+    document.getElementById('btn-sleep').innerText = state.pet.isSleeping ? 'Разбудить ☀️' : 'Спать 😴';
+    document.getElementById('zzz-text').style.display = state.pet.isSleeping ? 'block' : 'none';
+}
+
+function switchTab(id) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${id}`).classList.add('active');
+    document.getElementById(`nav-${id}`).classList.add('active');
+    if(id === 'lessons') loadTask();
+}
+
+// --- СБОРКА ПИТОМЦА ---
+async function initPet() {
+    try {
+        const res = await fetch('./manifest.json');
+        manifest = await res.json();
+        buildPetDOM();
+        startPetLoop();
+    } catch(e) { console.error("Ошибка манифеста", e); }
+}
+
+function createImg(id) {
+    const p = manifest.parts.find(x => x.id === id);
+    if(!p) return '';
+    return `<image href="${p.file}" x="${-p.pivot[0]}" y="${-p.pivot[1]}" width="${p.size[0]}" height="${p.size[1]}" />`;
+}
+
+function buildPetDOM() {
+    const wrapper = document.getElementById('pet-svg-wrapper');
+    let mouth = state.pet.mouth ? state.pet.mouth : (state.pet.hunger < 30 ? "15_mouth_sad" : "13_mouth_smile");
+    let eyes = state.pet.isSleeping ? createImg("07_lid_left") + createImg("08_lid_right") : createImg("03_eye_left") + createImg("04_eye_right") + createImg("05_pupil_left") + createImg("06_pupil_right");
+
+    wrapper.innerHTML = `
+    <svg viewBox="0 0 400 520">
+        <g transform="translate(200, 345)">${createImg("19_backpack")}</g>
+        <g id="leg-l" style="transform-origin: 176px 408px;"><g transform="translate(176, 408)">${createImg("26_thigh_left")}<g transform="translate(0, 36)">${createImg("27_shin_left")}</g><g transform="translate(0, 72)">${createImg("28_foot_left")}</g></g></g>
+        <g id="leg-r" style="transform-origin: 224px 408px;"><g transform="translate(224, 408)">${createImg("29_thigh_right")}<g transform="translate(0, 36)">${createImg("30_shin_right")}</g><g transform="translate(0, 72)">${createImg("31_foot_right")}</g></g></g>
+        <g transform="translate(200, 330)">${createImg("17_body")}</g>
+        <g transform="translate(200, 330)">${createImg("18_vest")}</g>
+        <g id="arm-l" style="transform-origin: 142px 296px;"><g transform="translate(142, 296)">${createImg("20_shoulder_left")}<g transform="translate(0, 36)">${createImg("21_forearm_left")}</g><g transform="translate(0, 70)">${createImg("22_hand_left")}</g></g></g>
+        <g id="arm-r" style="transform-origin: 258px 296px;"><g transform="translate(258, 296)">${createImg("23_shoulder_right")}<g transform="translate(0, 36)">${createImg("24_forearm_right")}</g><g transform="translate(0, 70)">${createImg("25_hand_right")}</g></g></g>
+        <g transform="translate(200, 170)">${createImg("01_head")}</g>
+        <g transform="translate(200, 160)">${createImg("09_headphones")}</g>
+        <g transform="translate(200, 96)">${createImg("02_hair")}</g>
+        <g transform="translate(162, 168)">${eyes.split('</image>')[0]}</g>
+        <g transform="translate(238, 168)">${eyes.split('</image>')[1] || ''}</g>
+        <g transform="translate(200, 208)">${createImg(mouth)}</g>
+    </svg>`;
+}
+</script><script>
+// --- ДВИЖОК ЖИЗНИ (FSM) ---
+function startPetLoop() {
+    const container = document.getElementById('pet-container');
+    const legL = document.getElementById('leg-l');
+    const legR = document.getElementById('leg-r');
+    const armL = document.getElementById('arm-l');
+    const armR = document.getElementById('arm-r');
+
+    setInterval(() => {
+        if(state.pet.isSleeping || state.pet.ignore) { petState = 'idle'; return; }
+        if(Math.random() < 0.6) petState = 'walking';
+        else petState = 'idle';
+        if(petState === 'walking') dir = Math.random() > 0.5 ? 1 : -1;
+    }, 3000);
+
+    function loop() {
+        animTime += 0.1;
+        container.style.transform = `translateX(${petX}px) scaleX(${dir})`;
+        
+        if(petState === 'walking' && !state.pet.ignore && !state.pet.isSleeping) {
+            petX += dir * 2;
+            if(petX > window.innerWidth - 150) { petX = window.innerWidth - 150; dir = -1; }
+            if(petX < 10) { petX = 10; dir = 1; }
             
-            ['hunger', 'mood', 'energy'].forEach(stat => {
-                const val = appData[stat];
-                document.getElementById('bar-' + stat).style.width = val + '%';
-                document.getElementById('stat-' + stat + '-val').innerText = val + '%';
-            });
-
-            document.getElementById('btn-freeze').innerText = petState === 'frozen' ? 'Можно играть' : 'Не отвлекай';
-            document.getElementById('btn-sleep').innerText = petState === 'sleeping' ? 'Разбудить' : 'Спать';
-            document.getElementById('zzz-container').style.display = petState === 'sleeping' ? 'block' : 'none';
+            const swing = Math.sin(animTime * 8) * 20;
+            legL.style.transform = `rotate(${swing}deg)`;
+            legR.style.transform = `rotate(${-swing}deg)`;
+            armL.style.transform = `rotate(${-swing}deg)`;
+            armR.style.transform = `rotate(${swing}deg)`;
+        } else {
+            legL.style.transform = `rotate(0deg)`; legR.style.transform = `rotate(0deg)`;
+            armL.style.transform = `rotate(0deg)`; armR.style.transform = `rotate(0deg)`;
         }
+        requestAnimationFrame(loop);
+    }
+    loop();
+}
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-pink-100', 'text-pink-600');
-                btn.classList.add('text-gray-500');
-            });
-            document.getElementById('tab-' + tabId).classList.add('active');
-            document.getElementById('nav-' + tabId).classList.add('bg-pink-100', 'text-pink-600');
-        }
+// --- ДЕЙСТВИЯ С ПИТОМЦЕМ ---
+function feedPet() {
+    if(state.hearts < 10) return alert('Нужно больше сердечек!');
+    if(state.pet.isSleeping) return alert('Питомец спит.');
+    state.hearts -= 10;
+    state.pet.hunger = Math.min(100, state.pet.hunger + 30);
+    state.pet.mouth = '14_mouth_open';
+    updateUI(); buildPetDOM();
+    setTimeout(() => { state.pet.mouth = null; buildPetDOM(); }, 1000);
+}
 
-        // --- СБОРКА ПИТОМЦА ---
-        async function initPet() {
-            try {
-                const res = await fetch('./manifest.json');
-                manifest = await res.json();
-                buildPetSVG();
-                startPetLoop();
-            } catch(e) { console.error("Нет манифеста", e); }
-        }
+function playPet() {
+    if(state.hearts < 5) return alert('Нужно больше сердечек!');
+    if(state.pet.energy < 15) return alert('Питомец устал.');
+    state.hearts -= 5;
+    state.pet.mood = Math.min(100, state.pet.mood + 20);
+    state.pet.energy = Math.max(0, state.pet.energy - 15);
+    updateUI();
+}
 
-        function createImg(id) {
-            const p = manifest.parts.find(x => x.id === id);
-            if(!p) return '';
-            return `<image href="${p.file}" x="${-p.pivot[0]}" y="${-p.pivot[1]}" width="${p.size[0]}" height="${p.size[1]}" />`;
-        }
+function callPet() {
+    if(state.pet.isSleeping) return alert('Питомец спит.');
+    petX = window.innerWidth / 2 - 70;
+    petState = 'idle';
+}
 
-        function buildPetSVG() {
-            const wrapper = document.getElementById('pet-svg-wrapper');
-            
-            let mouth = petState === 'sleeping' ? "15_mouth_sad" : (appData.hunger < 30 ? "15_mouth_sad" : "13_mouth_smile");
-            let eyes = petState === 'sleeping' ? createImg("07_lid_left") + createImg("08_lid_right") : createImg("03_eye_left") + createImg("04_eye_right") + createImg("05_pupil_left") + createImg("06_pupil_right");
+function freezePet() {
+    state.pet.ignore = !state.pet.ignore;
+    updateUI();
+}
 
-            wrapper.innerHTML = `
-            <svg viewBox="0 0 400 520">
-                <g transform="translate(200, 345)">${createImg("19_backpack")}</g>
-                
-                <!-- Ноги -->
-                <g id="leg-l" class="rig-seg" style="transform-origin: 176px 408px;">
-                    <g transform="translate(176, 408)">
-                        ${createImg("26_thigh_left")}
-                        <g transform="translate(0, 36)">${createImg("27_shin_left")}</g>
-                        <g transform="translate(0, 72)">${createImg("28_foot_left")}</g>
-                    </g>
-                </g>
-                <g id="leg-r" class="rig-seg" style="transform-origin: 224px 408px;">
-                    <g transform="translate(224, 408)">
-                        ${createImg("29_thigh_right")}
-                        <g transform="translate(0, 36)">${createImg("30_shin_right")}</g>
-                        <g transform="translate(0, 72)">${createImg("31_foot_right")}</g>
-                    </g>
-                </g>
+function sleepPet() {
+    state.pet.isSleeping = !state.pet.isSleeping;
+    if(state.pet.isSleeping) {
+        let sleepInt = setInterval(() => {
+            state.pet.energy = Math.min(100, state.pet.energy + 10);
+            updateUI();
+            if(!state.pet.isSleeping || state.pet.energy >= 100) clearInterval(sleepInt);
+        }, 3000);
+    }
+    updateUI(); buildPetDOM();
+}
 
-                <!-- Тело -->
-                <g transform="translate(200, 330)">${createImg("17_body")}</g>
-                <g transform="translate(200, 330)">${createImg("18_vest")}</g>
+// --- ИГРА "ПОЙМАЙ ЯБЛОЧКО" ---
+let isPlaying = false, score = 0, basketPos = 50;
+function startGame() {
+    if(state.pet.energy < 15) return alert('Питомец устал!');
+    state.pet.energy -= 15; updateUI();
+    isPlaying = true; score = 0;
+    document.getElementById('score').innerText = score;
+    document.getElementById('game-area').style.display = 'block';
+    
+    const area = document.getElementById('game-area');
+    const basket = document.getElementById('basket');
+    
+    area.onmousemove = (e) => { basketPos = e.clientX - area.getBoundingClientRect().left; basket.style.left = basketPos + 'px'; };
+    area.ontouchmove = (e) => { basketPos = e.touches[0].clientX - area.getBoundingClientRect().left; basket.style.left = basketPos + 'px'; };
 
-                <!-- Руки -->
-                <g id="arm-l" class="rig-seg" style="transform-origin: 142px 296px;">
-                    <g transform="translate(142, 296)">
-                        ${createImg("20_shoulder_left")}
-                        <g transform="translate(0, 36)">${createImg("21_forearm_left")}</g>
-                        <g transform="translate(0, 70)">${createImg("22_hand_left")}</g>
-                    </g>
-                </g>
-                <g id="arm-r" class="rig-seg" style="transform-origin: 258px 296px;">
-                    <g transform="translate(258, 296)">
-                        ${createImg("23_shoulder_right")}
-                        <g transform="translate(0, 36)">${createImg("24_forearm_right")}</g>
-                        <g transform="translate(0, 70)">${createImg("25_hand_right")}</g>
-                    </g>
-                </g>
-
-                <!-- Голова -->
-                <g transform="translate(200, 170)">${createImg("01_head")}</g>
-                <g transform="translate(200, 160)">${createImg("09_headphones")}</g>
-                <g transform="translate(200, 96)">${createImg("02_hair")}</g>
-                
-                <g transform="translate(162, 168)">${eyes.split('</image>')[0]}</g>
-                <g transform="translate(238, 168)">${eyes.split('</image>')[1] || ''}</g>
-                
-                <g transform="translate(200, 208)">${createImg(mouth)}</g>
-            </svg>`;
-        }
-
-        // --- ДВИЖОК ЖИЗНИ (FSM) ---
-        function startPetLoop() {
-            const container = document.getElementById('pet-container');
-            const legL = document.getElementById('leg-l');
-            const legR = document.getElementById('leg-r');
-            const armL = document.getElementById('arm-l');
-            const armR = document.getElementById('arm-r');
-
-            setInterval(() => {
-                if(petState === 'sleeping' || petState === 'frozen') return;
-                if(Math.random() < 0.6) petState = 'walking';
-                else petState = 'idle';
-                if(petState === 'walking') dir = Math.random() > 0.5 ? 1 : -1;
-            }, 3000);
-
-            function loop() {
-                animTime += 0.1;
-                container.style.transform = `translateX(${petX}px) scaleX(${dir})`;
-                
-                if(petState === 'walking') {
-                    petX += dir * 2;
-                    if(petX > window.innerWidth - 160) { petX = window.innerWidth - 160; dir = -1; }
-                    if(petX < 10) { petX = 10; dir = 1; }
-                    
-                    const swing = Math.sin(animTime * 8) * 20;
-                    legL.style.transform = `rotate(${swing}deg)`;
-                    legR.style.transform = `rotate(${-swing}deg)`;
-                    armL.style.transform = `rotate(${-swing}deg)`;
-                    armR.style.transform = `rotate(${swing}deg)`;
-                } else {
-                    legL.style.transform = `rotate(0deg)`;
-                    legR.style.transform = `rotate(0deg)`;
-                    armL.style.transform = `rotate(0deg)`;
-                    armR.style.transform = `rotate(0deg)`;
+    let appleLoop = setInterval(() => {
+        if(!isPlaying) { clearInterval(appleLoop); return; }
+        const apple = document.createElement('div');
+        apple.className = 'apple'; apple.innerText = '🍎';
+        const x = Math.random() * (area.clientWidth - 30);
+        apple.style.left = x + 'px'; apple.style.top = '-30px';
+        area.appendChild(apple);
+        
+        let y = -30;
+        const fall = setInterval(() => {
+            y += 6; apple.style.top = y + 'px';
+            if(y > area.clientHeight - 50) {
+                clearInterval(fall);
+                if(Math.abs(x + 15 - basketPos) < 40) {
+                    score++; document.getElementById('score').innerText = score;
+                    if(score >= 10) endGame();
                 }
-                requestAnimationFrame(loop);
+                apple.remove();
             }
-            loop();
-        }
+        }, 30);
+    }, 800);
+}
 
-        // --- ДЕЙСТВИЯ ---
-        function feedPet() {
-            if(appData.hearts < 10) return alert('Нужно больше сердечек!');
-            appData.hearts -= 10;
-            appData.hunger = Math.min(100, appData.hunger + 30);
-            updateUI();
-        }
-        function playWithPet() {
-            if(appData.hearts < 5) return alert('Нужно больше сердечек!');
-            appData.hearts -= 5;
-            appData.mood = Math.min(100, appData.mood + 20);
-            updateUI();
-        }
-        function callPetCenter() {
-            petX = window.innerWidth / 2 - 80;
-            petState = 'idle';
-        }
-        function freezePet() {
-            petState = petState === 'frozen' ? 'idle' : 'frozen';
-            updateUI();
-        }
-        function toggleSleepPet() {
-            petState = petState === 'sleeping' ? 'idle' : 'sleeping';
-            buildPetSVG(); updateUI();
-        }
+function endGame() {
+    isPlaying = false;
+    document.getElementById('game-area').style.display = 'none';
+    state.hearts += 5;
+    state.pet.mood = Math.min(100, state.pet.mood + 10);
+    updateUI();
+    alert('Молодец! +5 сердечек!');
+}
+</script><script>
+// --- БАЗА ЗАДАЧ ---
+const TASKS = [
+    { type: 'Арифметика', q: 'У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?', a: '5' },
+    { type: 'Логика', q: 'Все коты мяукают. Мурка — кот. Что делает Мурка? (Напиши "мяукает")', a: 'мяукает' },
+    { type: 'IQ', q: 'Продолжи ряд: 2, 4, 6, 8, ... Какое следующее число?', a: '10' },
+    { type: 'Внимание', q: 'Найди лишнее: яблоко, груша, морковь, банан.', a: 'морковь' },
+    { type: 'Логика', q: 'Что тяжелее: 1 кг ваты или 1 кг железа? (Напиши "одинаково")', a: 'одинаково' }
+];
 
-        // --- ЗАДАЧИ ---
-        const questionBank = [
-            { cat: "Арифметика ➕", q: "Сколько будет 5 + 4?", options: ["7", "8", "9", "10"], answer: "9" },
-            { cat: "Логика 🧩", q: "Все кошки любят рыбу. Пушок — кошка. Любит ли Пушок рыбу?", options: ["Да", "Нет", "Не знает"], answer: "Да" },
-            { cat: "IQ-задачка 💡", q: "Что становится больше, если его перевернуть?", options: ["Число 6", "Дом", "Арбуз", "Слон"], answer: "Число 6" },
-            { cat: "Арифметика ➖", q: "У Зити было 12 яблок. Он съел 4. Сколько осталось?", options: ["6", "7", "8", "9"], answer: "8" },
-            { cat: "Загадка 🔍", q: "Какое слово всегда пишется неверно?", options: ["Неверно", "Ошибка", "Буквы", "Алфавит"], answer: "Неверно" }
-        ];
-        let currentQ = 0;
+function loadTask() {
+    if(state.lessonTask >= 5) { 
+        alert('Урок пройден! +20 сердечек'); 
+        state.hearts += 20; state.lessonTask = 0; updateUI(); 
+    }
+    const task = TASKS[state.lessonTask];
+    
+    document.getElementById('task-type').innerText = task.type;
+    document.getElementById('task-q').innerText = task.q;
+    document.getElementById('task-progress').innerText = `${state.lessonTask + 1}/5`;
+    document.getElementById('lesson-bar').style.width = `${(state.lessonTask/5)*100}%`;
+    document.getElementById('ziti-hint').innerText = '';
+    
+    document.getElementById('answer-area').innerHTML = `
+        <input type="text" id="ans" placeholder="Твой ответ..." style="width:100%; padding:12px; border-radius:12px; border:2px solid var(--border); font-size:16px; margin-bottom:10px; text-align:center;">
+        <button class="btn" onclick="checkAns()">Отправить</button>
+    `;
+}
 
-        function loadQuestion() {
-            const q = questionBank[currentQ];
-            document.getElementById('question-category').innerText = q.cat;
-            document.getElementById('question-text').innerText = q.q;
-            document.getElementById('lesson-title').innerText = `Задача ${currentQ + 1} из 5`;
-            document.getElementById('lesson-progress-bar').style.width = `${((currentQ + 1) / 5) * 100}%`;
-            
-            const container = document.getElementById('options-container');
-            container.innerHTML = '';
-            q.options.forEach(opt => {
-                const btn = document.createElement('button');
-                btn.className = 'btn-bubble bg-white text-pink-700 border-2 border-pink-200 p-4 rounded-2xl font-bold shadow-sm';
-                btn.innerText = opt;
-                btn.onclick = () => checkAnswer(opt, q.answer);
-                container.appendChild(btn);
-            });
-        }
+function checkAns() {
+    const task = TASKS[state.lessonTask];
+    const val = document.getElementById('ans').value.trim().toLowerCase();
+    if(val === task.a.toLowerCase()) {
+        state.hearts += 10; state.solved++; state.lessonTask++;
+        updateUI();
+        if(window.confetti) confetti({ particleCount: 50, spread: 60 });
+        loadTask();
+    } else {
+        document.getElementById('ziti-hint').innerText = "Попробуй еще раз, у тебя получится!";
+    }
+}
 
-        function checkAnswer(userOpt, correct) {
-            const fb = document.getElementById('feedback-box');
-            fb.classList.remove('hidden');
-            if (userOpt === correct) {
-                fb.className = 'mt-4 p-4 rounded-xl text-center font-bold bg-green-100 text-green-700';
-                fb.innerText = '✨ Верно! +10 сердечек';
-                appData.hearts += 10; appData.solvedTasks++;
-                updateUI();
-                if (window.confetti) confetti({ particleCount: 50 });
-                setTimeout(() => { currentQ = (currentQ + 1) % 5; loadQuestion(); fb.classList.add('hidden'); }, 1500);
-            } else {
-                fb.className = 'mt-4 p-4 rounded-xl text-center font-bold bg-red-100 text-red-700';
-                fb.innerText = 'Попробуй еще раз!';
-            }
-        }
+// --- РОДИТЕЛЯМ ---
+function authParent() {
+    if(document.getElementById('pin').value === '1234') {
+        document.getElementById('parent-stats').style.display = 'block';
+        document.getElementById('stat-solved').innerText = state.solved;
+    } else alert('Неверный PIN');
+}
 
-        // --- ИГРА ---
-        let isPlaying = false, score = 0, basketX = 50;
-        function startGame() {
-            if (appData.energy < 15) return alert('Зити устал!');
-            appData.energy -= 15; updateUI();
-            isPlaying = true; score = 0;
-            document.getElementById('game-score').innerText = score;
-            
-            const canvas = document.getElementById('gameCanvas');
-            const container = document.getElementById('game-container');
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-            const ctx = canvas.getContext('2d');
-            let apples = [];
+function resetProgress() {
+    if(confirm('Сбросить всё?')) { location.reload(); }
+}
 
-            const handleMove = (e) => {
-                const rect = canvas.getBoundingClientRect();
-                basketX = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
-            };
-            canvas.onmousemove = handleMove;
-            canvas.ontouchmove = handleMove;
+// --- ЭФФЕКТ ПРИЗРАКА ---
+document.addEventListener('mouseover', e => {
+    if(e.target.closest('button, input, .nav-btn')) document.body.classList.add('hover-ui');
+});
+document.addEventListener('mouseout', e => {
+    if(e.target.closest('button, input, .nav-btn')) document.body.classList.remove('hover-ui');
+});
 
-            function loop() {
-                if (!isPlaying) return;
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                if (Math.random() < 0.03) apples.push({ x: Math.random() * (canvas.width - 30), y: -20 });
-                
-                ctx.font = '30px Arial';
-                ctx.fillText('🧺', basketX - 15, canvas.height - 10);
-                
-                for (let i = apples.length - 1; i >= 0; i--) {
-                    let a = apples[i];
-                    a.y += 4;
-                    ctx.fillText('🍎', a.x, a.y);
-                    if (a.y > canvas.height - 30 && Math.abs(a.x - basketX) < 30) {
-                        score++; document.getElementById('game-score').innerText = score;
-                        apples.splice(i, 1);
-                        if (score >= 10) { isPlaying = false; alert('Победа! +5 сердечек'); appData.hearts += 5; updateUI(); return; }
-                    } else if (a.y > canvas.height) apples.splice(i, 1);
-                }
-                requestAnimationFrame(loop);
-            }
-            loop();
-        }
-
-        // --- РОДИТЕЛЯМ ---
-        function verifyParentPin() {
-            if (document.getElementById('pin-input').value === '1234') {
-                document.getElementById('parent-pin-container').classList.add('hidden');
-                document.getElementById('parent-dashboard').classList.remove('hidden');
-            } else alert('Неверный PIN');
-        }
-        function lockParentPortal() {
-            document.getElementById('parent-pin-container').classList.remove('hidden');
-            document.getElementById('parent-dashboard').classList.add('hidden');
-        }
-        function resetAppProgress() {
-            if(confirm('Сбросить прогресс?')) { location.reload(); }
-        }
-
-        // --- СТАРТ ---
-        document.addEventListener('mouseover', e => {
-            if(e.target.closest('button, input')) document.body.classList.add('hover-control');
-        });
-        document.addEventListener('mouseout', e => {
-            if(e.target.closest('button, input')) document.body.classList.remove('hover-control');
-        });
-
-        window.onload = () => { initPet(); updateUI(); loadQuestion(); };
-    </script>
+// --- СТАРТ ---
+window.onload = () => {
+    initPet();
+    updateUI();
+};
+</script>
 </body>
 </html>

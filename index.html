@@ -41,18 +41,35 @@ header {
 /* ЖИВОЙ ПИТОМЕЦ НА ЭКРАНЕ */
 #freePet {
     position: fixed; bottom: 0; left: 50px;
-    width: 140px; height: 180px; /* Уменьшенный размер для фона */
-    z-index: 50; pointer-events: none; /* Не мешает кликам */
-    transition: opacity 0.3s ease, transform 0.5s ease;
+    width: 140px; height: 180px; 
+    z-index: 50; pointer-events: none; 
+    transition: opacity 0.3s ease, left 0.1s linear;
     filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15));
     transform-origin: bottom center;
 }
 #freePet svg { width: 100%; height: 100%; overflow: visible; }
 #freePet.ghost { opacity: 0.15 !important; }
-#freePet.walking svg { animation: walkBob 0.4s infinite alternate; }
-#freePet.sleeping svg { transform: rotate(-90deg) translateY(50px); }
 
-@keyframes walkBob { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+/* Анимации скелета */
+.leg-left { transform-origin: 176px 408px; animation: walkLegL 0.6s infinite alternate; }
+.leg-right { transform-origin: 224px 408px; animation: walkLegR 0.6s infinite alternate; }
+.arm-left { transform-origin: 142px 296px; animation: walkArmL 0.6s infinite alternate; }
+.arm-right { transform-origin: 258px 296px; animation: walkArmR 0.6s infinite alternate; }
+
+#freePet.walking .leg-left { animation-play-state: running; }
+#freePet.walking .leg-right { animation-play-state: running; }
+#freePet.walking .arm-left { animation-play-state: running; }
+#freePet.walking .arm-right { animation-play-state: running; }
+
+#freePet.idle .leg-left, #freePet.sitting .leg-left { animation-play-state: paused; }
+#freePet.idle .leg-right, #freePet.sitting .leg-right { animation-play-state: paused; }
+#freePet.idle .arm-left, #freePet.sitting .arm-left { animation-play-state: paused; }
+#freePet.idle .arm-right, #freePet.sitting .arm-right { animation-play-state: paused; }
+
+@keyframes walkLegL { from { transform: rotate(-15deg); } to { transform: rotate(15deg); } }
+@keyframes walkLegR { from { transform: rotate(15deg); } to { transform: rotate(-15deg); } }
+@keyframes walkArmL { from { transform: rotate(10deg); } to { transform: rotate(-10deg); } }
+@keyframes walkArmR { from { transform: rotate(-10deg); } to { transform: rotate(10deg); } }
 
 /* Управление питомцем */
 .pet-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
@@ -83,7 +100,6 @@ header {
 .problem-title { font-size: 12px; color: var(--primary); font-weight: 700; text-transform: uppercase; margin-bottom: 5px; }
 .problem-text { font-size: 17px; font-weight: 600; line-height: 1.5; }
 .scaffold-step { background: var(--card-bg); border: 2px dashed var(--primary-light); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-.options-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
 input[type="text"], input[type="password"] { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 14px; font-size: 16px; margin: 8px 0 12px; outline: none; background: var(--card-bg); color: var(--text); }
 input:focus { border-color: var(--primary); }
 
@@ -221,7 +237,7 @@ input:focus { border-color: var(--primary); }
 
 <script>
 // --- СОСТОЯНИЕ ---
-const STORAGE_KEY = 'maryashino_final_v5';
+const STORAGE_KEY = 'maryashino_final_v6';
 const DEFAULT_STATE = {
     hearts: 50, solvedCount: 0, lessonsCompleted: 0, lessonTask: 0,
     soundOn: true,
@@ -230,8 +246,7 @@ const DEFAULT_STATE = {
 };
 let state = JSON.parse(localStorage.getItem(STORAGE_KEY)) || JSON.parse(JSON.stringify(DEFAULT_STATE));
 let manifest = null;
-let petInterval = null;
-let petFSM = 'idle'; // idle, walking, sitting, sleeping
+let petFSM = 'idle'; 
 let petX = 50;
 let walkDirection = 1;
 
@@ -265,7 +280,7 @@ function switchTab(id, btn) {
     if(id === 'learnTab') renderTask();
 }
 
-// --- СБОРКА И АНИМАЦИЯ ПИТОМЦА (2.5D) ---
+// --- СБОРКА ИЕРАРХИЧЕСКОГО SVG ---
 async function loadManifest() {
     try {
         const res = await fetch('./manifest.json');
@@ -276,12 +291,23 @@ async function loadManifest() {
     }
 }
 
-function buildPetSVG(container, scale = 1) {
+function createSvgPart(id) {
+    const p = manifest.parts.find(x => x.id === id);
+    if (!p) return null;
+    const img = document.createElementNS("http://www.w3.org/2000/svg", "image");
+    img.setAttribute("href", p.file);
+    img.setAttribute("x", -p.pivot[0]);
+    img.setAttribute("y", -p.pivot[1]);
+    img.setAttribute("width", p.size[0]);
+    img.setAttribute("height", p.size[1]);
+    return img;
+}
+
+function buildPetSVG(container) {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute("viewBox", "0 0 400 520");
-    svg.innerHTML = '';
-
-    function addPart(id, className = '') {
+    
+    const addPart = (id, className = '') => {
         const p = manifest.parts.find(x => x.id === id);
         if (p) {
             const el = document.createElementNS("http://www.w3.org/2000/svg", "image");
@@ -293,17 +319,74 @@ function buildPetSVG(container, scale = 1) {
             if (className) el.setAttribute("class", className);
             svg.appendChild(el);
         }
-    }
+    };
 
-    // Сборка слоями (упрощенная, но красивая)
+    // 1. Рюкзак (фон)
     addPart("19_backpack");
-    addPart("26_thigh_left", "leg-left"); addPart("27_shin_left", "leg-left"); addPart("28_foot_left", "leg-left");
-    addPart("29_thigh_right", "leg-right"); addPart("30_shin_right", "leg-right"); addPart("31_foot_right", "leg-right");
+
+    // 2. Ноги (сочленения)
+    const legL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    legL.setAttribute("class", "leg-left");
+    legL.setAttribute("transform", "translate(176,408)");
+    const thighL = createSvgPart("26_thigh_left"); if(thighL) legL.appendChild(thighL);
+    const shinL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    shinL.setAttribute("transform", "translate(0, 36)");
+    const shinImgL = createSvgPart("27_shin_left"); if(shinImgL) shinL.appendChild(shinImgL);
+    const footL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    footL.setAttribute("transform", "translate(0, 36)");
+    const footImgL = createSvgPart("28_foot_left"); if(footImgL) footL.appendChild(footImgL);
+    shinL.appendChild(footL);
+    legL.appendChild(shinL);
+    svg.appendChild(legL);
+
+    const legR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    legR.setAttribute("class", "leg-right");
+    legR.setAttribute("transform", "translate(224,408)");
+    const thighR = createSvgPart("29_thigh_right"); if(thighR) legR.appendChild(thighR);
+    const shinR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    shinR.setAttribute("transform", "translate(0, 36)");
+    const shinImgR = createSvgPart("30_shin_right"); if(shinImgR) shinR.appendChild(shinImgR);
+    const footR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    footR.setAttribute("transform", "translate(0, 36)");
+    const footImgR = createSvgPart("31_foot_right"); if(footImgR) footR.appendChild(footImgR);
+    shinR.appendChild(footR);
+    legR.appendChild(shinR);
+    svg.appendChild(legR);
+
+    // 3. Тело
     addPart("17_body"); addPart("18_vest");
-    addPart("20_shoulder_left", "arm-left"); addPart("21_forearm_left", "arm-left"); addPart("22_hand_left", "arm-left");
-    addPart("23_shoulder_right", "arm-right"); addPart("24_forearm_right", "arm-right"); addPart("25_hand_right", "arm-right");
+
+    // 4. Руки (сочленения)
+    const armL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    armL.setAttribute("class", "arm-left");
+    armL.setAttribute("transform", "translate(142,296)");
+    const shoulderL = createSvgPart("20_shoulder_left"); if(shoulderL) armL.appendChild(shoulderL);
+    const foreL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    foreL.setAttribute("transform", "translate(0, 36)");
+    const foreImgL = createSvgPart("21_forearm_left"); if(foreImgL) foreL.appendChild(foreImgL);
+    const handL = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    handL.setAttribute("transform", "translate(0, 34)");
+    const handImgL = createSvgPart("22_hand_left"); if(handImgL) handL.appendChild(handImgL);
+    foreL.appendChild(handL);
+    armL.appendChild(foreL);
+    svg.appendChild(armL);
+
+    const armR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    armR.setAttribute("class", "arm-right");
+    armR.setAttribute("transform", "translate(258,296)");
+    const shoulderR = createSvgPart("23_shoulder_right"); if(shoulderR) armR.appendChild(shoulderR);
+    const foreR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    foreR.setAttribute("transform", "translate(0, 36)");
+    const foreImgR = createSvgPart("24_forearm_right"); if(foreImgR) foreR.appendChild(foreImgR);
+    const handR = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    handR.setAttribute("transform", "translate(0, 34)");
+    const handImgR = createSvgPart("25_hand_right"); if(handImgR) handR.appendChild(handImgR);
+    foreR.appendChild(handR);
+    armR.appendChild(foreR);
+    svg.appendChild(armR);
+
+    // 5. Голова
     addPart("01_head");
-    
     addPart("03_eye_left"); addPart("04_eye_right");
     
     if (state.pet.isSleeping) {
@@ -322,6 +405,7 @@ function buildPetSVG(container, scale = 1) {
     
     addPart("09_headphones"); addPart("02_hair");
     
+    container.innerHTML = '';
     container.appendChild(svg);
 }
 
@@ -329,11 +413,8 @@ function buildPetSVG(container, scale = 1) {
 function initPetEngine() {
     const petContainer = document.getElementById('freePet');
     buildPetSVG(petContainer);
-    
-    // Стартовая позиция
     petContainer.style.left = petX + 'px';
 
-    // Цикл принятия решений (раз в 3 секунды)
     setInterval(() => {
         if (state.pet.isSleeping) { petFSM = 'sleeping'; return; }
         if (state.pet.ignore) { petFSM = 'idle'; return; }
@@ -342,7 +423,6 @@ function initPetEngine() {
         if (rand < 0.4) {
             petFSM = 'walking';
             walkDirection = Math.random() > 0.5 ? 1 : -1;
-            // Поворот питомца
             petContainer.style.transform = `scaleX(${walkDirection})`;
         } else if (rand < 0.7) {
             petFSM = 'sitting';
@@ -350,14 +430,12 @@ function initPetEngine() {
             petFSM = 'idle';
         }
         
-        petContainer.className = petFSM; // Для CSS
+        petContainer.className = petFSM; 
     }, 3000);
 
-    // Цикл движения (каждые 50мс)
     setInterval(() => {
         if (petFSM === 'walking' && !state.pet.ignore && !state.pet.isSleeping) {
-            petX += walkDirection * 1.5;
-            // Границы экрана
+            petX += walkDirection * 2;
             if (petX > window.innerWidth - 140) { petX = window.innerWidth - 140; walkDirection = -1; petContainer.style.transform = `scaleX(-1)`; }
             if (petX < 0) { petX = 0; walkDirection = 1; petContainer.style.transform = `scaleX(1)`; }
             petContainer.style.left = petX + 'px';
@@ -365,7 +443,6 @@ function initPetEngine() {
     }, 50);
 }
 
-// Эффект призрака при наведении на кнопки
 document.addEventListener('mouseover', (e) => {
     if (e.target.closest('button, input, .tab-btn')) {
         document.getElementById('freePet').classList.add('ghost');
@@ -439,13 +516,10 @@ function sleepPet() {
 }
 
 function updatePetFace() {
-    const petContainer = document.getElementById('freePet');
-    petContainer.innerHTML = '';
-    buildPetSVG(petContainer);
-    petContainer.className = petFSM;
+    buildPetSVG(document.getElementById('freePet'));
 }
 
-// --- ЗАДАЧИ (ПОЛНЫЙ ПУЛ) ---
+// --- ЗАДАЧИ ---
 const TASKS = [
     { type: 'Арифметика', q: 'У Маряшины было 8 конфет. Она отдала 3. Сколько осталось?', a: '5', guide: 'Отдала — значит вычитаем. 8 - 3 = ?' },
     { type: 'Арифметика', q: 'На ветке сидело 12 птиц. 4 улетели. Сколько осталось?', a: '8', guide: 'Улетели — вычитаем. 12 - 4 = ?' },

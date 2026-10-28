@@ -20,15 +20,19 @@
     { "id": "17_body", "file": "17_body.svg", "size": [150, 190], "pivot": [75, 95], "place": [200, 330] },
     { "id": "18_vest", "file": "18_vest.svg", "size": [150, 190], "pivot": [75, 95], "place": [200, 330] },
     { "id": "19_backpack", "file": "19_backpack.svg", "size": [190, 150], "pivot": [95, 75], "place": [200, 345] },
+    
     { "id": "20_shoulder_left", "file": "20_shoulder_left.svg", "size": [34, 62], "pivot": [17, 14], "place": [142, 296] },
     { "id": "21_forearm_left", "file": "21_forearm_left.svg", "size": [32, 62], "pivot": [16, 14], "place": [142, 332] },
     { "id": "22_hand_left", "file": "22_hand_left.svg", "size": [44, 48], "pivot": [22, 12], "place": [142, 366] },
+    
     { "id": "23_shoulder_right", "file": "23_shoulder_right.svg", "size": [34, 62], "pivot": [17, 14], "place": [258, 296] },
     { "id": "24_forearm_right", "file": "24_forearm_right.svg", "size": [32, 62], "pivot": [16, 14], "place": [258, 332] },
     { "id": "25_hand_right", "file": "25_hand_right.svg", "size": [44, 48], "pivot": [22, 12], "place": [258, 366] },
+    
     { "id": "26_thigh_left", "file": "26_thigh_left.svg", "size": [36, 56], "pivot": [18, 14], "place": [176, 408] },
     { "id": "27_shin_left", "file": "27_shin_left.svg", "size": [34, 56], "pivot": [17, 14], "place": [176, 444] },
     { "id": "28_foot_left", "file": "28_foot_left.svg", "size": [60, 36], "pivot": [30, 8], "place": [176, 480] },
+    
     { "id": "29_thigh_right", "file": "29_thigh_right.svg", "size": [36, 56], "pivot": [18, 14], "place": [224, 408] },
     { "id": "30_shin_right", "file": "30_shin_right.svg", "size": [34, 56], "pivot": [17, 14], "place": [224, 444] },
     { "id": "31_foot_right", "file": "31_foot_right.svg", "size": [60, 36], "pivot": [30, 8], "place": [224, 480] }
